@@ -37,17 +37,28 @@ class Node {
 };
 
 template<typename T>
+class SentinelingNode : public Node {
+  T* value_ = nullptr;
+};
+
+template<typename T>
+class TrueNode : public Node {
+
+};
+
+template<typename T>
 class Double_Linked_List {
-  Node<T>* nodes_;
-  Node<T>* head_;
+  TrueNode<T>* nodes_;
+  SentinelingNode<T>* head_;
   List_Iterator<T> iterator_;
+  size_t size;
 
   Double_Linked_List() {
 
   }
 
-  Node<T>* searchNode(T value) {
-    Node<T> searched_node = this->head_;
+  Node<T>* searchNode(const &T value) {
+    TrueNode<T> searched_node = this->head_;
     while (searched_node != nullptr && searched_node.value_ != value) {
       searched_node = searched_node.next_;
     }
@@ -61,15 +72,21 @@ class Double_Linked_List {
     }
     this->head_ = inserted_node;
     inserted_node.prev_ = nullptr;
+    this->size++;
   }
 
-  Node<T>* insertNode(T value) {
-    Node<T> inserted_node(value);
+  Node<T>* insertNode(const &T value) {
+    TrueNode<T> inserted_node(value);
     this->insertNode(inserted_node);
   }
 
-  Node<T>* deleteNode(T value) {
-    Node<T> deletedNode = searchNode(value);
+  /*Node<T>**/ deleteNode(const &T value) {
+    TrueNode<T> deletedNode = searchNode(value);
+    if (deletedNode == nullptr) {
+      std::cout << "Such node doesn't exist!" << std::endl;
+      return;
+    }
+
     if (deletedNode.prev_ != nullptr) {
       deletedNode.prev_->next_ = deletedNode.next_;
     }
@@ -79,7 +96,7 @@ class Double_Linked_List {
     if (deletedNode.next_ != nullptr) {
       deletedNode.next_->prev_ = deletedNode.prev_;
     }
-
+    this->size--;
   }
 
 };
