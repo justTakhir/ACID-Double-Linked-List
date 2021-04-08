@@ -1,4 +1,6 @@
 #pragma once
+#include <typeinfo>
+
 template<typename T>
 class List_Iterator {
   Node<T>* target_;
@@ -34,11 +36,16 @@ class Node {
     this->next_ = other_node->next_;
     this->value_ = other_node->value_;
   }
+
+  bool checkSentinel() const{
+    return(if (typeid(this->value_) == void));
+  }
 };
 
 template<typename T>
 class SentinelingNode : public Node {
-  T* value_ = nullptr;
+  //T* value_ = nullptr;//to do check for pointer
+  void value_;
 };
 
 template<typename T>
