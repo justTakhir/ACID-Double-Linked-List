@@ -16,7 +16,7 @@ int main() {
   int* a = &b;
   //checkType(test_node.getValue());
   //checkType(test_sent.getValue());
-  /*if (test_node.checkSentinel()) {
+  if (test_node.checkSentinel()) {
     std::cout << "fail" << std::endl;
   }
   else {
@@ -28,6 +28,5 @@ int main() {
   else {
     std::cout << "fail(" << std::endl;
   }
-  */
   return 0;
 }
