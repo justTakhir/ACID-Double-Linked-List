@@ -1,5 +1,7 @@
 #include <typeinfo>
 #include <iostream>
+#include <cstdint>
+#include <time.h>
 #include "Double_Linked_List.h"
 
 template <typename T>
@@ -28,5 +30,9 @@ int main() {
   else {
     std::cout << "fail(" << std::endl;
   }
+  std::cout << "--------------NormTests---------------" << std::endl;
+  Double_Linked_List<int64_t> my_list;
+  TrueNode<int64_t> my_node1;
+  my_list.insertNode(my_node1);
   return 0;
 }

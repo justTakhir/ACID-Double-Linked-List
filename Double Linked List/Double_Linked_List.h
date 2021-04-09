@@ -37,15 +37,17 @@ class Node {
     this->value_ = new_value;
   }
 
-  Node<T>* getPrev() const {
+  /*Node<T>**/
+  auto getPrev() const {
     return this->prev_;
   }
-
+  
   void setPrev(Node<T>* new_prev) {
     this->prev_ = new_prev;
   }
 
-  Node<T>* getNext() const {
+  /*Node<T>**/
+  auto getNext() const {
     return this->next_;
   }
 
@@ -72,6 +74,10 @@ class TrueNode : public Node<T> {
   bool checkSentinel() override {
     return false;
   }
+  using Node<T>::setNext;
+  void setNext(TrueNode<T>* new_prev) {};
+  using Node<T>::setPrev;
+  void setPrev(TrueNode<T>* new_prev) {};
 };
 
 template<typename T>
@@ -103,13 +109,14 @@ class Double_Linked_List {
 
   }
 
-  Node<T>* searchNode(const T &value) {
+  /*Node<T>**/
+  auto searchNode(const T &value) {
     //TrueNode<T> searched_node = this->head_;
     TrueNode<T> searched_node = this->sentinel_.getNext();
     while ((!searched_node.checkSentinel()) && searched_node.getValue() != value) {
       searched_node = searched_node.getNext();
     }
-    if (searched_node.checkSentinel()) {//if random value in sentinel such as 
+    if (searched_node.checkSentinel()) {//if random value in sentinel such as searched value
       return nullptr;
     }
     else {
@@ -117,9 +124,9 @@ class Double_Linked_List {
     }
   }
 
-  void insertNode(Node<T> inserted_node) {
+  void insertNode(TrueNode<T> inserted_node) {
     inserted_node.setNext(this->sentinel_.getNext());
-    this->sentinel_.getNext().setPrev(inserted_node);
+    this->sentinel_.getNext()->setPrev(inserted_node);
     this->sentinel_.setNext(inserted_node);
     inserted_node.setPrev(this->sentinel_);
     this->size_++;
@@ -137,10 +144,10 @@ class Double_Linked_List {
       return;
     }
 
-    //deletedNode.getPrev().setNext(deletedNode.getNext());
-    //deletedNode.getNext().setPrev(deletedNode.getPrev());
-    deletedNode.getPrev().getNext = deletedNode.getNext();
-    deletedNode.getNext().getPrev = deletedNode.getPrev();
+    //deletedNode.getPrev()->setNext(deletedNode.getNext());
+    //deletedNode.getNext()->setPrev(deletedNode.getPrev());
+    deletedNode.getPrev()->getNext() = deletedNode.getNext();
+    deletedNode.getNext()->getPrev() = deletedNode.getPrev();
     this->size_--;
   }
 
