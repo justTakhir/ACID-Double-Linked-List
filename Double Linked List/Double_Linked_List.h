@@ -12,7 +12,7 @@ class Node {
   Node() {};
 
   Node(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr)
-                        : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {}
+    : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {};
 
   Node<T> operator =(const Node<T> &other_node) {
     this->ref_count_ = other_node->ref_count_;
@@ -59,25 +59,32 @@ class Node {
 };
 
 template<typename T>
-class SentinelingNode : public Node<T> {
+class SentinelingNode : public virtual Node<T> {
  private:
  public:
+  SentinelingNode() : Node<T>() {};
+  SentinelingNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
+     Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
   bool checkSentinel() override {
     return true;
   }
 };
 
 template<typename T>
-class TrueNode : public Node<T> {
+class TrueNode : public virtual Node<T> {
  private:
  public:
+   TrueNode() : Node<T>() {};
+   TrueNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
+     Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
+
   bool checkSentinel() override {
     return false;
   }
-  using Node<T>::setNext;
-  void setNext(TrueNode<T>* new_prev) {};
-  using Node<T>::setPrev;
-  void setPrev(TrueNode<T>* new_prev) {};
+  //using Node<T>::setNext;
+  //void setNext(TrueNode<T>* new_prev) {};
+  //using Node<T>::setPrev;
+  //void setPrev(TrueNode<T>* new_prev) {};
 };
 
 template<typename T>

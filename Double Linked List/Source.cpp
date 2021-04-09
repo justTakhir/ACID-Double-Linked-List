@@ -14,8 +14,8 @@ int main() {
   TrueNode<int> test_node;
   SentinelingNode<int> test_sent;
   
-  int b = 32;
-  int* a = &b;
+  int64_t b = 32;
+  int64_t* a = &b;
   //checkType(test_node.getValue());
   //checkType(test_sent.getValue());
   if (test_node.checkSentinel()) {
@@ -32,7 +32,7 @@ int main() {
   }
   std::cout << "--------------NormTests---------------" << std::endl;
   Double_Linked_List<int64_t> my_list;
-  TrueNode<int64_t> my_node1;
+  TrueNode<int64_t> my_node1(b);
   my_list.insertNode(my_node1);
   return 0;
 }

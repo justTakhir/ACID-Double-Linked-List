@@ -1,16 +1,16 @@
 ﻿  Source.cpp
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(129,1): error C2664: "void Node<T>::setPrev(Node<T> *)": невозможно преобразовать аргумент 1 из "TrueNode<T>" в "Node<T> *"
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(136,1): error C2664: "void Node<T>::setPrev(Node<T> *)": невозможно преобразовать аргумент 1 из "TrueNode<T>" в "Node<T> *"
           with
           [
               T=int64_t
           ]
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(129,40): message : Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(136,40): message : Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
 C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(45,8): message : см. объявление "Node<T>::setPrev"
           with
           [
               T=int64_t
           ]
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(127): message : во время компиляции функции-члена класс шаблон "void Double_Linked_List<int64_t>::insertNode(TrueNode<T>)"
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(134): message : во время компиляции функции-члена класс шаблон "void Double_Linked_List<int64_t>::insertNode(TrueNode<T>)"
           with
           [
               T=int64_t
@@ -21,23 +21,23 @@ C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Source.cpp(36)
               T=int64_t
           ]
 C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Source.cpp(34): message : выполняется компиляция ссылки на экземпляр класс шаблон функции "Double_Linked_List<int64_t>"
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(130,1): error C2664: "void Node<T>::setNext(Node<T> *)": невозможно преобразовать аргумент 1 из "TrueNode<T>" в "Node<T> *"
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(137,1): error C2664: "void Node<T>::setNext(Node<T> *)": невозможно преобразовать аргумент 1 из "TrueNode<T>" в "Node<T> *"
           with
           [
               T=int64_t
           ]
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(130,29): message : Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(137,29): message : Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
 C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(54,8): message : см. объявление "Node<T>::setNext"
           with
           [
               T=int64_t
           ]
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(131,1): error C2664: "void Node<T>::setPrev(Node<T> *)": невозможно преобразовать аргумент 1 из "SentinelingNode<T>" в "Node<T> *"
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(138,1): error C2664: "void Node<T>::setPrev(Node<T> *)": невозможно преобразовать аргумент 1 из "SentinelingNode<T>" в "Node<T> *"
           with
           [
               T=int64_t
           ]
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(131,31): message : Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
+C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(138,31): message : Для выполнения данного преобразования нет доступного оператора преобразования, определенного пользователем, или вызов оператора невозможен
 C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Double_Linked_List.h(45,8): message : см. объявление "Node<T>::setPrev"
           with
           [
