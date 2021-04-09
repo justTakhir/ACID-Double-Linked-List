@@ -117,17 +117,15 @@ class Double_Linked_List {
     }
   }
 
-  Node<T>* insertNode(Node<T> inserted_node) {
-    inserted_node.next_ = this->head_;
-    if (this->head_ != nullptr) {
-      this->head_->prev_ = inserted_node;
-    }
-    this->head_ = inserted_node;
-    inserted_node.prev_ = nullptr;
+  void insertNode(Node<T> inserted_node) {
+    inserted_node.setNext(this->sentinel_.getNext());
+    this->sentinel_.getNext().setPrev(inserted_node);
+    this->sentinel_.setNext(inserted_node);
+    inserted_node.setPrev(this->sentinel_);
     this->size_++;
   }
 
-  Node<T>* insertNode(const T &value) {
+  void insertNode(const T &value) {
     TrueNode<T> inserted_node(value);
     this->insertNode(inserted_node);
   }
@@ -139,15 +137,10 @@ class Double_Linked_List {
       return;
     }
 
-    if (deletedNode.prev_ != nullptr) {
-      deletedNode.prev_->next_ = deletedNode.next_;
-    }
-    else {
-      this->head_ = deletedNode.next_;
-    }
-    if (deletedNode.next_ != nullptr) {
-      deletedNode.next_->prev_ = deletedNode.prev_;
-    }
+    //deletedNode.getPrev().setNext(deletedNode.getNext());
+    //deletedNode.getNext().setPrev(deletedNode.getPrev());
+    deletedNode.getPrev().getNext = deletedNode.getNext();
+    deletedNode.getNext().getPrev = deletedNode.getPrev();
     this->size_--;
   }
 
