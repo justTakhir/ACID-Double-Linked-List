@@ -1,18 +1,23 @@
 #pragma once
 #include <typeinfo>
 
+template <typename T>
+class SentinelingNode;
+template <typename T>
+class TrueNode;
+
 template<typename T>
 class Node {
  private:
-  T value_;
+  //T value_;
   Node<T>* prev_;// this is first if = null
   Node<T>* next_;// this is last if = null
-  size_t ref_count_;
+  //size_t ref_count_;
  public:
   Node() {};
 
-  Node(T value, Node<T>* prev = nullptr, Node<T>* next = nullptr, size_t ref_count = 2)
-                        : value_(value), prev_(prev), next_(next), ref_count_(ref_count) {}
+  //Node(T value, Node<T>* prev = nullptr, Node<T>* next = nullptr, size_t ref_count = 2)
+  //                      : value_(value), prev_(prev), next_(next), ref_count_(ref_count) {}
 
   Node<T> operator =(const Node<T> &other_node) {
     this->ref_count_ = other_node->ref_count_;
@@ -21,9 +26,9 @@ class Node {
     this->value_ = other_node.value_;
   }
 
-  T getValue() {
-    return this->value_;
-  }
+  //T getValue() {
+  //  return this->value_;
+  //}
 
   void setValue(const size_t& new_value) {
     this->value_ = new_value;
@@ -41,7 +46,7 @@ class Node {
     return this->prev_;
   }
 
-  void setPrev(const Node<T>*& new_prev) {
+  void setPrev(Node<T>* new_prev) {
     this->prev_ = new_prev;
   }
 
@@ -49,14 +54,16 @@ class Node {
     return this->next_;
   }
 
-  void setNext(const Node<T>*& new_next) {
+  void setNext(Node<T>* new_next) {
     this->next_ = new_next;
   }
 
-  bool checkSentinel() const{
+  bool checkSentinel(){
     //return(if (typeid(this->value_) == void));
-    void* var_with_sentinel_type = nullptr;
-    const std::type_info& this_value_type_info = typeid(this->getValue()), sentinel_type_info = typeid(var_with_sentinel_type);
+    T* var_with_sentinel_type = nullptr;
+    //const std::type_info& this_value_type_info = typeid(*this->getValue()), sentinel_type_info = typeid(var_with_sentinel_type);
+    const std::type_info& this_value_type_info = typeid(this->getValue());
+    const std::type_info& sentinel_type_info = typeid(var_with_sentinel_type);
     return (this_value_type_info.name() == sentinel_type_info.name());
   }
 };
@@ -65,21 +72,29 @@ template<typename T>
 class SentinelingNode : public Node<T> {
  private:
   //T* value_ = nullptr;//to do check for pointer
-  void* value_ = nullptr;
+  T* value_ = nullptr;
+  
   size_t ref_count_ = 0;
  public:
-   
+   T* getValue() {
+     return this->value_;
+   }
+
+   void setValue(const size_t& new_value) {
+     this->value_ = new_value;
+   }
 
   /*SentinelingNode(void* value = nullptr, Node<T>* prev = nullptr, Node<T>* next = nullptr, size_t ref_count = 0)
                 : value_(value), prev_(prev), next_(next), ref_count_(ref_count) {};*/
-   SentinelingNode(void* value = nullptr, size_t ref_count = 0)
+   SentinelingNode(T* value = nullptr, size_t ref_count = 0)
      : value_(value), ref_count_(ref_count) {};
 };
 
 template<typename T>
 class TrueNode : public Node<T> {
  private:
- 
+   T value_;
+   size_t ref_count_;
  public:
    TrueNode() {};
 
