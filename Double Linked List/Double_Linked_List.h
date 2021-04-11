@@ -3,18 +3,18 @@
 
 template<typename T>
 class Node {
- private:
+private:
   T value_;
   Node<T>* prev_;// this is first if = null
   Node<T>* next_;// this is last if = null
   size_t ref_count_;
- public:
+public:
   Node() {};
 
   Node(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr)
     : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {};
 
-  Node<T> operator =(const Node<T> &other_node) {
+  Node<T> operator =(const Node<T>& other_node) {
     this->ref_count_ = other_node->ref_count_;
     this->prev_ = other_node->prev_;
     this->next_ = other_node->next_;
@@ -33,21 +33,21 @@ class Node {
     return this->ref_count_;
   }
 
-  void setRefCount(const size_t &new_value) {
+  void setRefCount(const size_t& new_value) {
     this->value_ = new_value;
   }
 
   /*Node<T>**/
-  auto getPrev() const {
+  Node<T>* getPrev() const {
     return this->prev_;
   }
-  
+
   void setPrev(Node<T>* new_prev) {
     this->prev_ = new_prev;
   }
 
   /*Node<T>**/
-  auto getNext() const {
+  Node<T>* getNext() const {
     return this->next_;
   }
 
@@ -60,11 +60,11 @@ class Node {
 
 template<typename T>
 class SentinelingNode : public virtual Node<T> {
- private:
- public:
+private:
+public:
   SentinelingNode() : Node<T>() {};
   SentinelingNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
-     Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
+    Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
   bool checkSentinel() override {
     return true;
   }
@@ -72,11 +72,11 @@ class SentinelingNode : public virtual Node<T> {
 
 template<typename T>
 class TrueNode : public virtual Node<T> {
- private:
- public:
-   TrueNode() : Node<T>() {};
-   TrueNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
-     Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
+private:
+public:
+  TrueNode() : Node<T>() {};
+  TrueNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
+    Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
 
   bool checkSentinel() override {
     return false;
@@ -106,18 +106,18 @@ class List_Iterator {
 
 template<typename T>
 class Double_Linked_List {
- private:
+private:
   //TrueNode<T>* nodes_;
   SentinelingNode<T> sentinel_;
   List_Iterator<T> iterator_;
   size_t size_ = 0;
- public:
+public:
   Double_Linked_List() {
 
   }
 
   /*Node<T>**/
-  auto searchNode(const T &value) {
+  auto searchNode(const T& value) {
     //TrueNode<T> searched_node = this->head_;
     TrueNode<T> searched_node = this->sentinel_.getNext();
     while ((!searched_node.checkSentinel()) && searched_node.getValue() != value) {
@@ -139,12 +139,12 @@ class Double_Linked_List {
     this->size_++;
   }
 
-  void insertNode(const T &value) {
+  void insertNode(const T& value) {
     TrueNode<T> inserted_node(value);
     this->insertNode(inserted_node);
   }
 
-  void deleteNode(const T &value) {
+  void deleteNode(const T& value) {
     TrueNode<T> deletedNode = searchNode(value);
     if (deletedNode == nullptr) {
       std::cout << "Such node doesn't exist!" << std::endl;
