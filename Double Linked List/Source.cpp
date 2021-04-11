@@ -2,37 +2,33 @@
 #include <iostream>
 #include <cstdint>
 #include <time.h>
-#include "Double_Linked_List.h"
-
-template <typename T>
-void checkType(const T& var) {
-  const std::type_info& t_info = typeid(var);
-  std::cout << t_info.name() << std::endl;
-}
+#include <list>
+#include <algorithm>
+#include <stdexcept>
+//#include "Double_Linked_List.h"
 
 int main() {
-  TrueNode<int> test_node;
-  SentinelingNode<int> test_sent;
+  std::list<int32_t> a;
+  a.assign(3, 4);
+  a.assign(2, 3);
+  a.clear();
+
+  a.assign(5, 6);
+  a.resize(5);
+  a.resize(5, 8);
+  auto b = std::find(a.begin(), a.end(), 8);
+  //a.erase(a.find(3));
+  if (b != a.end()) {
+    a.erase(b);
+  }
+
+  a.push_back(7);
   
-  int64_t b = 32;
-  int64_t* a = &b;
-  //checkType(test_node.getValue());
-  //checkType(test_sent.getValue());
-  if (test_node.checkSentinel()) {
-    std::cout << "fail" << std::endl;
-  }
-  else {
-    std::cout << "All right" << std::endl;
-  }
-  if (test_sent.checkSentinel()) {
-    std::cout << "All right: this is really sentinel!" << std::endl;
-  }
-  else {
-    std::cout << "fail(" << std::endl;
-  }
-  std::cout << "--------------NormTests---------------" << std::endl;
-  Double_Linked_List<int64_t> my_list;
-  TrueNode<int64_t> my_node1(b);
-  my_list.insertNode(my_node1);
+  std::list<int32_t> c;
+  c.assign(3, 11);
+  c.merge(a);
+  std::cerr << "Merged list must be ordered.";
+  EXIT_FAILURE;
+  
   return 0;
 }

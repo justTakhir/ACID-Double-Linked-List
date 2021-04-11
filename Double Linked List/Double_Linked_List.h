@@ -1,5 +1,14 @@
 #pragma once
 #include <typeinfo>
+#include <iostream>
+#include <initializer_list>
+
+//template<typename T>
+//void swap_something(T *obj1, T *obj2) {
+//  T* buf = obj1;
+//  obj1 = obj2;
+//  obj2 = buf;
+//}
 
 template<typename T>
 class Node {
@@ -9,49 +18,58 @@ private:
   Node<T>* next_;// this is last if = null
   size_t ref_count_;
 public:
+  using value_type = T;
+  using node = Node<value_type>;
+  using node_pointer = node*;
+  using node_reference = node&;
+  using true_node = TrueNode<value_type>;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = value_type&;
+  using const_reference = const value_type&;
+  using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
   Node() {};
 
-  Node(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr)
+  Node(value_type value, size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)
     : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {};
 
-  Node<T> operator =(const Node<T>& other_node) {
+  node operator =(const node_reference other_node) {
     this->ref_count_ = other_node->ref_count_;
     this->prev_ = other_node->prev_;
     this->next_ = other_node->next_;
     this->value_ = other_node.value_;
   }
 
-  T getValue() const {
+  value_type getValue() const {
     return this->value_;
   }
 
-  void setValue(const size_t& new_value) {
+  void setValue(const size_type& new_value) {
     this->value_ = new_value;
   }
 
-  size_t getRefCount() const {
+  size_type getRefCount() const {
     return this->ref_count_;
   }
 
-  void setRefCount(const size_t& new_value) {
+  void setRefCount(const size_type& new_value) {
     this->value_ = new_value;
   }
 
-  /*Node<T>**/
-  Node<T>* getPrev() const {
+  node* getPrev() const {
     return this->prev_;
   }
 
-  void setPrev(Node<T>* new_prev) {
+  void setPrev(node new_prev) {
     this->prev_ = new_prev;
   }
 
-  /*Node<T>**/
-  Node<T>* getNext() const {
+  node* getNext() const {
     return this->next_;
   }
 
-  void setNext(Node<T>* new_next) {
+  void setNext(node new_next) {
     this->next_ = new_next;
   }
 
@@ -104,58 +122,332 @@ class List_Iterator {
   }
 };
 
-template<typename T>
-class Double_Linked_List {
-private:
-  //TrueNode<T>* nodes_;
-  SentinelingNode<T> sentinel_;
-  List_Iterator<T> iterator_;
-  size_t size_ = 0;
-public:
-  Double_Linked_List() {
+template<class T>
+class List;
 
+template <class T>
+class Iterator {
+  friend class ConsistentList<T>;
+public:
+  // operator++
+  Iterator* operator++() {//pre
+    //do smth
+    this->ptr = this->ptr->getNext();
+    return *this;
   }
 
-  /*Node<T>**/
-  auto searchNode(const T& value) {
-    //TrueNode<T> searched_node = this->head_;
-    TrueNode<T> searched_node = this->sentinel_.getNext();
-    while ((!searched_node.checkSentinel()) && searched_node.getValue() != value) {
-      searched_node = searched_node.getNext();
+  Iterator* operator++(int) {//post
+    this->ptr = this->ptr->getNext();
+    return *this;
+    //do smth
+  }
+  // operator--
+  Iterator* operator--() {//pre
+    //do smth
+    this->ptr = this->ptr->getPrev();
+    return *this;
+  }
+
+  Iterator* operator--(int) {//post
+    this->ptr = this->ptr->getPrev();
+    return *this;
+    //do smth
+  }
+  // operator*
+  Node<T>& operator* () {
+    return this->ptr->getValue();
+  }
+  
+  // operator->
+  
+
+  bool operator!=(Iterator it) {
+    return (this->ptr != it.ptr);
+  }
+
+  bool operator==(Iterator it) {
+    return (this->ptr == it.ptr);
+  }
+
+private:
+  Iterator() = default;
+  Iterator(Node<T>* ptr_) : ptr(ptr_) {}
+  Node<T>* ptr;
+};
+
+template <class T>
+class ConstIterator {
+  friend class List<T>;
+public:
+  // operator++
+  // operator--
+  // operator*
+  // operator->
+private:
+  ConstIterator() = default;
+  const Node<T>* ptr;
+};
+
+template<class T>
+class ÑonsistentList {
+public:
+  using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = value_type&;
+  using const_reference = const value_type&;
+  using node_type = Node<T>;
+  using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
+  using iterator = Iterator<value_type>;
+  using const_iterator = ConstIterator<value_type>;
+  // using reverse_iterator = std::reverse_iterator<iterator>;
+  // using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+  ÑonsistentList() { }
+  explicit ÑonsistentList(size_type n);
+  ÑonsistentList(size_type n, const T& value);
+
+  template<class InputIterator>
+  ÑonsistentList(InputIterator first, InputIterator last);
+
+  ÑonsistentList(const ÑonsistentList& x);
+  // ÑonsistentList(ÑonsistentList&& x);
+
+  ÑonsistentList(initializer_list<T>);
+
+  ~ÑonsistentList();
+
+  ÑonsistentList& operator=(const ÑonsistentList& x);
+  // ÑonsistentList& operator=(ÑonsistentList&& x)
+
+  ÑonsistentList& operator=(std::initializer_list<T>);
+
+  template<class InputIterator>
+  void assign(InputIterator first, InputIterator last);
+  void assign(size_type n, const_reference t) {
+    //delete nodes;
+    //create new nodes and fill it
+    
+  }
+  void assign(std::initializer_list<value_type> init_list);
+
+  //+//
+  iterator begin() noexcept {
+    iterator begin_iterator(this->sentinel.getNext());
+    return begin_iterator;
+  }
+  const_iterator begin() const noexcept {
+    return this->cbegin();
+  }
+  iterator end() noexcept {
+    iterator end_iterator(&this->sentinel);
+    return end_iterator;
+  };
+  const_iterator end() const noexcept {
+    return this->cend();
+  }
+  // reverse_iterator rbegin() noexcept;
+  // const_reverse_iterator rbegin() const noexcept;
+  // reverse_iterator rend() noexcept;
+  // const_reverse_iterator rend() const noexcept;
+  const_iterator cbegin() const noexcept {
+    const_iterator cbegin_iterator(this->sentinel.getNext());
+    return cbegin_iterator;
+  };
+  const_iterator cend() const noexcept {
+    const_iterator cend_iterator(&this->sentinel);
+    return cend_iterator;
+  };
+  // const_reverse_iterator crbegin() const noexcept;
+  // const_reverse_iterator crend() const noexcept;
+
+  //+//
+  bool empty() const noexcept {
+    return(size == 0);
+  };
+  //+//
+  size_type size() const noexcept {
+    return this->list_size;
+  };
+  //size_type max_size() const noexcept;
+
+  //+//
+  void resize(size_type sz) {
+    resize(sz, NULL);
+  };
+  void resize(size_type sz, const T& c) {
+    if (sz < list_size) {
+      size_type diff = list_size - sz;
+      for (size_type i = 0; i < diff; i++) {
+        this->pop_back();
+      }
     }
-    if (searched_node.checkSentinel()) {//if random value in sentinel such as searched value
+
+    if (sz > list_size) {
+      size_type diff = sz - list_size;
+      node_type* inserted_node;
+      for (size_type i = 0; i < diff; i++) {
+        this->push_back(c);
+      }
+    }
+    this->list_size = sz;
+
+    //if sz == list size, then do nothing
+  };
+
+  //+//maybe-maybe)))i can remake this for iterator using
+  reference front() {
+    return sentinel.getNext()->getValue();
+  };
+  const_reference front() const {
+    return front();
+  };
+  reference back() {
+    return sentinel.getPrev()->getValue();
+  };
+  const_reference back() const {
+    return back();
+  };
+
+  void push_front(const T& x) {
+    node_type tmp(x);
+    this->list_size++;
+  };
+  // void push_front(T&& x);
+
+  void pop_front() {
+    this->erase(this->begin());
+    this->list_size--;
+  };
+
+  void push_back(const T& x) {
+    this->list_size++;
+  };
+  // void push_back(T&& x);
+
+  void pop_back() {
+    this->erase(this->end() - 1);
+    this->list_size--;
+  };
+
+  iterator insert(const_iterator position, const T& x);
+  // iterator insert(const_iterator position, T&& x);
+  iterator insert(const_iterator position, size_type n, const T& x);
+
+  template<class InputIterator>
+  iterator insert(const_iterator position, InputIterator first, InputIterator last);
+  iterator insert(const_iterator position, initializer_list<T> il);
+
+  iterator erase(const_iterator position) {
+    const_iterator new_position = position + 1;
+    this->delete_node(position->ptr);//ïî çíà÷åíèþ íåëüçÿ, èáî íîäà ñ òàêèì æå çíà÷åíèåì ìîæåò âñòðåòèòüñÿ ðàíåå
+    return new_position;
+  };
+  iterator erase(const_iterator position, const_iterator last);
+
+  void swap(ÑonsistentList& other_list) {
+    //ñêîðåå âñåãî ìîæíî ïðîñòî ñâàïíóòü óêàçàòåëè íà ëèñòû èëè ÷òî-òî òàêîå, èáî ïî ôàêòó ïðîñòî íàçâàíèÿ ìåíÿþòñÿ))
+  };
+
+  //+//
+  void clear() noexcept {
+    //erase äëÿ êàæäîãî ýëåìåíòà èëè ïðîñòî êàê-òî ìîæíî ñðàçó âñ¸ óäàëèòü
+    while(this->list_size != 0){
+      this->pop_front();
+    }
+  };
+
+  void remove(const T& value) {
+  //delete all = value
+    node_type* removed_node = this->search_node(value);
+    while (removed_node != nullptr) {
+      this->erase(removed_node);
+      removed_node = search_node(value);
+    }
+  };
+  //+//
+  void merge(ÑonsistentList& x) {
+  //äåëàåò èç äâóõ ñîðòàíóòûõ ïî âîçðàñòàíèþ ñïèñêîâ îäèí áîëüøîé ñîðòàíóòûé ïî âîçðàñòàíèþ ñïèñîê, âõîäíîé ÷èñòèòñÿ
+    if (!this->is_sorted_list()) {
+      std::cout << "No merged, because one or both lists not ordered..." << std::endl;
+      EXIT_FAILURE;
+    }
+    if (*this->begin() > *(x.end() - 1)) {//åñëè 
+      for (size_type i = 0; i < abs(this->list_size - x.list_size); i++) {
+        this->push_front(*(x.end() - 1 - i));
+        x.pop_back();
+      }
+    }
+    if(*(this->end() - 1) < *x.begin()) {
+      for (size_type i = 0; i < abs(this->list_size - x.list_size); i++) {
+        this->push_back(*(x.begin()));
+        x.pop_front();
+      }
+    }
+    //x.clear(); íå íóæíî, èáî âî âðåìÿ ïóøåé è ïîïîâ âñ¸ äîëæíî ñàìî ïîä÷èñòèòüñÿ è äîáàâèòüñÿ ãäå íóæíî
+  };
+  // void merge(list&& x);
+
+  //+//
+  void reverse() noexcept {
+    //ìîæåò ìîæíî ïðîñòî ñâàïíóòü èòåðàòîðû, íî ìû òàêèìè ïóòÿìè åù¸ íå óìååì õîäèòü, ïîýòîìó
+    iterator it1 = this->begin(), it2 = this->end() - 1;
+    for (size_type i = 0; i < this->size() / 2; i++) {
+      this->swap_nodes(it1.ptr, it2.ptr);
+      it1 = it1 + 1;
+      it2 = it2 - 1;
+    }
+  };
+
+private:
+  SentinelingNode<T> sentinel;
+  size_type list_size;
+
+  bool is_sorted_list(ÑonsistentList& x) {
+    for (auto i = x.begin() + 1; i != x.end(); i++) {
+      if (*(i - 1) > *i) {
+        false;
+      }
+    }
+    return true;
+  }
+
+  void swap_nodes(node_type* node1, node_type* node2) {
+    node_type* buf_ptr = node1;
+    node1 = node2;
+    node2 = buf_ptr;
+      
+    buf_ptr = node1->getNext();
+    node1->setNext(node1->getPrev());
+    node1->setPrev(buf_ptr);
+
+    buf_ptr = node2->getNext();
+    node2->setNext(node2->getPrev());
+    node2->setPrev(buf_ptr);
+  }
+
+  node_type* search_node(const_reference value) {
+    TrueNode<T>* searched_node = this->sentinel.getNext();
+    while (seacrhed_node != this->sentinel && searched_node->getValue != value) {
+      searched_node = searched_node->getNext();
+    }
+    if (searched_node == this->sentinel) {
       return nullptr;
     }
-    else {
-      return searched_node;
+    return searched_node;
+
+  }
+
+  void delete_node(iterator deleted_node) {
+    deleted_node->getPrev()->setNext(deleted_node->getNext());
+    deleted_node->getNext()->setPrev(deleted_node->getPrev());
+    
+    if (deleted_node->getRefCount() == 0) {
+      delete deleted_node;
     }
+    size--;
   }
-
-  void insertNode(TrueNode<T> inserted_node) {
-    inserted_node.setNext(this->sentinel_.getNext());
-    this->sentinel_.getNext()->setPrev(inserted_node);
-    this->sentinel_.setNext(inserted_node);
-    inserted_node.setPrev(this->sentinel_);
-    this->size_++;
-  }
-
-  void insertNode(const T& value) {
-    TrueNode<T> inserted_node(value);
-    this->insertNode(inserted_node);
-  }
-
-  void deleteNode(const T& value) {
-    TrueNode<T> deletedNode = searchNode(value);
-    if (deletedNode == nullptr) {
-      std::cout << "Such node doesn't exist!" << std::endl;
-      return;
-    }
-
-    //deletedNode.getPrev()->setNext(deletedNode.getNext());
-    //deletedNode.getNext()->setPrev(deletedNode.getPrev());
-    deletedNode.getPrev()->getNext() = deletedNode.getNext();
-    deletedNode.getNext()->getPrev() = deletedNode.getPrev();
-    this->size_--;
-  }
+protected:
 
 };
