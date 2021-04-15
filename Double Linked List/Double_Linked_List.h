@@ -24,8 +24,9 @@ private:
 //}
 
 template<typename T>
-class TrueNode<T>;
-class SentinelingNode<T>;
+class TrueNode;
+template<typename T>
+class SentinelingNode;
 
 template<typename T>
 class Node {
@@ -72,6 +73,13 @@ public:
 
   void setRefCount(const size_type& new_value) {
     this->value_ = new_value;
+    this->checkEndRefCount();
+  }
+
+  void checkEndRefCount() {
+    if (this->ref_count_ == 0) {
+      delete* this;
+    }
   }
 
   node* getPrev() const {
@@ -122,23 +130,6 @@ public:
   //void setPrev(TrueNode<T>* new_prev) {};
 };
 
-template<typename T>
-class List_Iterator {
-  Node<T>* target_;
-
-  List_Iterator<T> operator --() {
-
-  }
-
-  List_Iterator<T> operator ++() {
-    this->target_.ref_count_--;
-    if (this->target_.ref_count_ == 0) {
-
-    }
-    this->target_ = this->target_.next_;
-  }
-};
-
 template<class T>
 class ConsistentList;
 
@@ -150,11 +141,25 @@ public:
   Iterator* operator++() {//pre
     //do smth
     this->ptr = this->ptr->getNext();
+    
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
+    
+    //if (this->ptr->getPrev()->getRefCount() == 0) {
+    //  delete this->ptr->getPrev();
+    //}
+    
     return *this;
   }
 
   Iterator* operator++(int) {//post
     this->ptr = this->ptr->getNext();
+
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
+    
+    //if (this->ptr->getPrev()->getRefCount() == 0) {
+    //  delete 
+    //}
+    
     return *this;
     //do smth
   }
@@ -162,20 +167,29 @@ public:
   Iterator* operator--() {//pre
     //do smth
     this->ptr = this->ptr->getPrev();
+    
+    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    
     return *this;
   }
 
   Iterator* operator--(int) {//post
     this->ptr = this->ptr->getPrev();
+
+    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+
     return *this;
     //do smth
   }
   // operator*
-  Node<T>& operator* () {
+  T operator* () {
     return this->ptr->getValue();
   }
   
   // operator->
+  Node<T>& operator ->() {
+    return this->ptr;
+  }
   
 
   bool operator!=(Iterator it) {
@@ -193,7 +207,7 @@ private:
 };
 
 template <class T>
-class ConstIterator {
+class ConstIterator : public Iterator<T> {
   friend class List<T>;
 public:
   // operator++
@@ -201,8 +215,8 @@ public:
   // operator*
   // operator->
 private:
-  ConstIterator() = default;
-  const Node<T>* ptr;
+  //ConstIterator() = default;
+  //const Node<T>* ptr;
 };
 
 template<class T>
@@ -412,13 +426,21 @@ public:
   // iterator insert(const_iterator position, T&& x);
   iterator insert(const_iterator position, size_type n, const T& x) {
     for (size_type i = 0; i < n; i++) {
-      node_type* inserted_node(*position);
+      //node_type* inserted_node(*position);
+      //create node in memory
+      node_type* inserted_node = new node_type;
+      inserted_node->setValue(x);
+      //insert //pos point to next after inserted element
+      inserted_node->setNext(position.)
+      //work with ref count
     }
   };
 
   template<class InputIterator>
   iterator insert(const_iterator position, InputIterator first, InputIterator last);
-  iterator insert(const_iterator position, std::initializer_list<T> il);
+  iterator insert(const_iterator position, std::initializer_list<T> init_list) {
+    this->insert(position, init_list.begin(), init_list.end());
+  };
 
   iterator erase(const_iterator position) {//мы заранее знаем позицию
     const_iterator new_position = position + 1;
@@ -533,15 +555,17 @@ private:
     return searched_node;
 
   }
-
+  //+//
   void delete_node(node_type* deleted_node) {
     deleted_node->getPrev()->setNext(deleted_node->getNext());
     deleted_node->getNext()->setPrev(deleted_node->getPrev());
     
     deleted_node->setRefCount(deleted_node->getRefCount() - 2);
-    deleted_node->getNext()->setRefCount(deleted_node->getNext()->getRefCount() + 1);
-    deleted_node->getPrev()->setRefCount(deleted_node->getPrev()->getRefCount() + 1);
-    //сделать соседним по +1;
+    if (!deleted_node->getPrev()->checkSentinel() && !deleted_node->getNext()->checkSentinel()) {//check for not last element in list
+      deleted_node->getNext()->setRefCount(deleted_node->getNext()->getRefCount() + 1);
+      deleted_node->getPrev()->setRefCount(deleted_node->getPrev()->getRefCount() + 1);
+      //сделать соседним по +1;
+    }//if last, will do nothing
 
     if (deleted_node->getRefCount() == 0) {
       delete deleted_node;
