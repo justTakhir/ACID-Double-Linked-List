@@ -1,2 +1,0 @@
-﻿  Source.cpp
-C:\Users\tanto\source\repos\Double Linked List\Double Linked List\Source.cpp(5,27): error C2079: "oboba" использует не имеющую определения структуру class "ConsistentList<int64_t>"
