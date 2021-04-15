@@ -1,0 +1,5 @@
+﻿  test.cpp
+C:\Users\tanto\source\repos\Double Linked List\Test\test.cpp(11,3): error C2065: Double_Linked_List: необъявленный идентификатор
+C:\Users\tanto\source\repos\Double Linked List\Test\test.cpp(11,22): error C2275: int32_t: недопустимое использование этого типа в качестве выражения
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\include\stdint.h(20): message : см. объявление "int32_t"
+C:\Users\tanto\source\repos\Double Linked List\Test\test.cpp(11,31): error C2065: TestList: необъявленный идентификатор

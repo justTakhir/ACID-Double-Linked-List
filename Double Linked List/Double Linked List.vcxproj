@@ -142,7 +142,13 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConsistentListException.h" />
+    <ClInclude Include="ConstIterator.h" />
     <ClInclude Include="Double_Linked_List.h" />
+    <ClInclude Include="Iterator.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="SentinelingNode.h" />
+    <ClInclude Include="TrueNode.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,273 +1,13 @@
 #pragma once
-#include <typeinfo>
 #include <iostream>
 #include <initializer_list>
 #include <algorithm>
 #include <iterator>
-
-
-class MergeException : std::exception {
-public:
-  explicit MergeException(std::string mes) : message(std::move(mes)) {};
-  const char* what() const throw() override {
-    return message.c_str();
-  }
-private:
-  std::string message;
-};
-
-//template<typename T>
-//void swap_something(T *obj1, T *obj2) {
-//  T* buf = obj1;
-//  obj1 = obj2;
-//  obj2 = buf;
-//}
-
-template<typename T>
-class TrueNode;
-template<typename T>
-class SentinelingNode;
-
-template<typename T>
-class Node {
-private:
-  T value_;
-  Node<T>* prev_;// this is first if = null
-  Node<T>* next_;// this is last if = null
-  size_t ref_count_;
-public:
-  using value_type = T;
-  using node = Node<value_type>;
-  using node_pointer = node*;
-  using node_reference = node&;
-  using true_node = TrueNode<value_type>;
-  using pointer = T*;
-  using const_pointer = const T*;
-  using reference = value_type&;
-  using const_reference = const value_type&;
-  using size_type = std::size_t;
-  using difference_type = std::ptrdiff_t;
-  Node() {};
-
-  Node(value_type value, size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)
-    : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {};
-
-  node operator =(const node_reference other_node) {
-    this->ref_count_ = other_node->ref_count_;
-    this->prev_ = other_node->prev_;
-    this->next_ = other_node->next_;
-    this->value_ = other_node.value_;
-  }
-
-  value_type getValue() const {
-    return this->value_;
-  }
-
-  void setValue(const size_type& new_value) {
-    this->value_ = new_value;
-  }
-
-  size_type getRefCount() const {
-    return this->ref_count_;
-  }
-
-  void setRefCount(const size_type& new_value) {
-    this->value_ = new_value;
-    //this->checkEndRefCount();
-  }
-
-  void checkEndRefCount() {
-    if (this->ref_count_ == 0) {
-      delete* this;
-    }
-  }
-
-  node* getPrev() const {
-    return this->prev_;
-  }
-
-  void setPrev(node new_prev) {
-    this->prev_ = new_prev;
-  }
-
-  node* getNext() const {
-    return this->next_;
-  }
-
-  void setNext(node new_next) {
-    this->next_ = new_next;
-  }
-
-  virtual bool checkSentinel() = 0;
-};
-
-template<typename T>
-class SentinelingNode : public virtual Node<T> {
-private:
-public:
-  SentinelingNode() : Node<T>() {};
-  SentinelingNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
-    Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
-  bool checkSentinel() override {
-    return true;
-  }
-};
-
-template<typename T>
-class TrueNode : public virtual Node<T> {
-private:
-public:
-  TrueNode() : Node<T>() {};
-  TrueNode(T value, size_t ref_count = 2, Node<T>* prev = nullptr, Node<T>* next = nullptr) :
-    Node<T>(value, ref_count = 2, prev = nullptr, next = nullptr) {};
-
-  bool checkSentinel() override {
-    return false;
-  }
-  //using Node<T>::setNext;
-  //void setNext(TrueNode<T>* new_prev) {};
-  //using Node<T>::setPrev;
-  //void setPrev(TrueNode<T>* new_prev) {};
-};
-
-template<class T>
-class ConsistentList;
-
-template <class T>
-class Iterator {
-  friend class ConsistentList<T>;
-public:
-  
-  Iterator* operator++() {//pre
-    //do smth
-    this->ptr = this->ptr->getNext();
-    
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
-    this->ptr->getPrev()->checkEndRefCount();
-
-    return *this;
-  }
-
-  Iterator* operator++(int) {//post
-    this->ptr = this->ptr->getNext();
-
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
-    this->ptr->getPrev()->checkEndRefCount();
-
-    return *this;
-    //do smth
-  }
-  // operator--
-  Iterator* operator--() {//pre
-    //do smth
-    this->ptr = this->ptr->getPrev();
-    
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-    this->ptr->getNext()->checkEndRefCount();
-
-    return *this;
-  }
-
-  Iterator* operator--(int) {//post
-    this->ptr = this->ptr->getPrev();
-
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-    this->ptr->getNext()->checkEndRefCount();
-
-    return *this;
-    //do smth
-  }
-  // operator*
-  T operator* () {
-    return this->ptr->getValue();
-  }
-  
-  // operator->
-  Node<T>& operator ->() {
-    return this->ptr;
-  }
-  
-
-  bool operator!=(Iterator it) {
-    return (this->ptr != it.ptr);
-  }
-
-  bool operator==(Iterator it) {
-    return (this->ptr == it.ptr);
-  }
-
-private:
-  Iterator() = default;
-  Iterator(Node<T>* ptr_) : ptr(ptr_) {}
-  Node<T>* ptr;
-};
-
-template <class T>
-class ConstIterator {
-  friend class List<T>;
-public:
-  ConstIterator* operator++() {//pre
-    //do smth
-    this->ptr = this->ptr->getNext();
-
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
-    this->ptr->getPrev()->checkEndRefCount();
-
-    return *this;
-  }
-
-  ConstIterator* operator++(int) {//post
-    this->ptr = this->ptr->getNext();
-
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
-    this->ptr->getPrev()->checkEndRefCount();
-
-    return *this;
-    //do smth
-  }
-  // operator--
-  ConstIterator* operator--() {//pre
-    //do smth
-    this->ptr = this->ptr->getPrev();
-
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-    this->ptr->getNext()->checkEndRefCount();
-
-    return *this;
-  }
-
-  ConstIterator* operator--(int) {//post
-    this->ptr = this->ptr->getPrev();
-
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-    this->ptr->getNext()->checkEndRefCount();
-
-    return *this;
-    //do smth
-  }
-  // operator*
-  const T operator* () {
-    return this->ptr->getValue();
-  }
-
-  // operator->
-  const Node<T>& operator ->() {
-    return this->ptr;
-  }
-
-
-  bool operator!=(ConstIterator it) {
-    return (this->ptr != it.ptr);
-  }
-
-  bool operator==(ConstIterator it) {
-    return (this->ptr == it.ptr);
-  }
-private:
-  ConstIterator() = default;
-  ConstIterator(Node<T> ptr_) : ptr(ptr_) {};
-  Node<T>* ptr;
-};
+#include "ConsistentListException.h"
+#include "Iterator.h"
+//#include "ConstIterator.h"
+#include "SentinelingNode.h"
+#include "TrueNode.h"
 
 template<class T>
 class СonsistentList {
@@ -286,7 +26,8 @@ public:
   // using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   //?++//
-  СonsistentList() { }
+  СonsistentList() = default;
+
   explicit СonsistentList(size_type n) {
     for (size_type i = 0; i < n; i++) {
       push_front(NULL);
@@ -299,7 +40,7 @@ public:
   };
   //?//
   template<class InputIterator>
-  СonsistentList(InputIterator first, InputIterator last);
+  СonsistentList(InputIterator first, InputIterator last) {};
   //+//
   СonsistentList(const СonsistentList& x) {
     for (size_type i = 0; i < x.size(); i++) {
@@ -344,13 +85,13 @@ public:
   };
 
   template<class InputIterator>
-  void assign(InputIterator first, InputIterator last);
+  void assign(InputIterator first, InputIterator last) {}
   void assign(size_type n, const_reference t) {
     //delete nodes;
     //create new nodes and fill it
-    
+
   }
-  void assign(std::initializer_list<value_type> init_list) {};
+  void assign(std::initializer_list<value_type> init_list) {}
 
   //++++++//
   iterator begin() noexcept {
@@ -416,7 +157,7 @@ public:
     //if sz == list size, then do nothing
   };
 
-  //++++//maybe-maybe)))already remake for iterators using
+  //++++//
   reference front() {
     return *this->begin();
     //return this->sentinel.getNext()->getValue();
@@ -425,7 +166,7 @@ public:
     return front();
   };
   reference back() {
-    return *(this->end() - 1);
+    return *std::prev(this->end());
     //return sentinel.getPrev()->getValue();
   };
   const_reference back() const {
@@ -435,52 +176,25 @@ public:
   //+// это чисто про дефолтный функционал, ещё нужно прикрутить работу ссылками
   void push_front(const T& x) {
     this->insert(std::next(this->begin()), x);
-    /*node_type* tmp = new node_type;
-    tmp->setValue(x);
-
-    tmp->setNext(this->sentinel.getNext());
-    this->sentinel.getNext()->setPrev(&tmp);
-    this->sentinel.setNext(&tmp);
-    tmp->setPrev(this->sentinel);
-    
-
-
-    //тут ещё работа с количеством ссылок нужна
-
-    this->list_size++;*/
   };
   // void push_front(T&& x);
   //+/
   void pop_front() {
     this->erase(this->begin());
-    //размер изменяется в erase
   };
 
   //+//как с push_front
   void push_back(const T& x) {
     this->insert(this->end(), x);
-    /*node_type* tmp = new node_type;
-    tmp->setValue(x);
-
-    tmp->setPrev(this->sentinel.getPrev());
-    this->sentinel.getPrev->setNext(&tmp);
-    this->sentinel.setPrev(&tmp);
-    tmp->setNext(this->sentinel);
-
-    //тут тоже работа с количеством ссылок
-
-    this->list_size++;*/
   };
   // void push_back(T&& x);
   //+//
   void pop_back() {
     this->erase(this->end() - 1);
-    //размер изменяется в erase
   };
 
   //++++//
   iterator insert(const_iterator position, const T& x) {
-    //node_type* inserted_node(*position);
     //create node in memory
     iterator pos(position->ptr);
     node_type* inserted_node = new node_type;
@@ -512,7 +226,7 @@ public:
   template<class InputIterator>
   iterator insert(const_iterator position, InputIterator first, InputIterator last) {
     iterator it_to_inserted_node;
-    for (auto i = first; i != last; i++) {
+    for (auto it = first; it != last; it++) {
       it_to_inserted_node = this->insert(position, *it);
     }
     return it_to_inserted_node;
@@ -527,18 +241,16 @@ public:
     this->delete_node(position.ptr);//по значению нельзя, ибо нода с таким же значением может встретиться ранее
     return new_position;
   };
-  iterator erase(const_iterator position, const_iterator last);
+  iterator erase(const_iterator position, const_iterator last) {};
   //+//
   void swap(СonsistentList& other_list) {
     //скорее всего можно просто свапнуть указатели на листы или что-то такое, ибо по факту просто названия меняются))
-    //std::swap(this->sentinel, other_list.sentinel);
     this->swap_nodes(&this->sentinel, &other_list.sentinel);
     std::swap(this->list_size, other_list.list_size);
   };
 
   //+//
   void clear() noexcept {
-    //erase для каждого элемента или просто как-то можно сразу всё удалить
     while(!this->empty()){
       this->pop_front();
     }
@@ -558,15 +270,13 @@ public:
   //делает из двух сортанутых по возрастанию списков один большой сортанутый по возрастанию список, входной чистится
     //if (!this->is_sorted_list()) {
     if (!std::is_sorted(this->begin(), this->end())) {
-      //std::cout << "No merged, because one or both lists not ordered..." << std::endl;
-      //EXIT_FAILURE;
       throw MergeException("List's must be ordered!!!");
     }
     size_type diff_size = std::max(this->size(), x.size()) - std::min(this->size(), x.size());
 
     if (*this->begin() > *(x.end() - 1)) {//если 
       for (size_type i = 0; i < diff_size; i++) {
-        this->push_front(*(x.end() - 1 - i));
+        this->push_front(*std::prev(x.end(), 1 + i));
         x.pop_back();
       }
     }
@@ -642,8 +352,8 @@ private:
     
     deleted_node->setRefCount(deleted_node->getRefCount() - 2);
     if (!deleted_node->getPrev()->checkSentinel() && !deleted_node->getNext()->checkSentinel()) {//check for not last element in list
-      deleted_node->getNext()->setRefCount(deleted_node->getNext()->getRefCount() + 1);
-      deleted_node->getPrev()->setRefCount(deleted_node->getPrev()->getRefCount() + 1);
+      deleted_node->getNext()->addRefCount();
+      deleted_node->getPrev()->addRefCount();
       //сделать соседним по +1;
     }//if last, will do nothing
 
