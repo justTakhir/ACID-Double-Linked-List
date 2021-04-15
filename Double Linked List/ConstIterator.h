@@ -1,6 +1,5 @@
 #pragma once
 #include "Node.h"
-#include "Iterator.h"
 
 template<class T>
 class ConsistentList;
@@ -75,6 +74,6 @@ public:
     this->ptr->checkEndRefCount();
   }
 private:
-  ConstIterator(Node<T> ptr_) : ptr(ptr_) {};
+  ConstIterator(Node<T>* ptr_) : ptr(ptr_) {};
   Node<T>* ptr;
 };

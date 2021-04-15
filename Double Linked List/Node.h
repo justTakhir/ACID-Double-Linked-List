@@ -2,15 +2,17 @@
 template<typename T>
 class Node {
 private:
+  using node = Node<value_type>;
+  using node_pointer = node*;
+  using node_reference = node&;
+  using node_const_reference = const node&;
+
   T value_;
   Node<T>* prev_;// this is first if = null
   Node<T>* next_;// this is last if = null
   size_t ref_count_;
 public:
   using value_type = T;
-  using node = Node<value_type>;
-  using node_pointer = node*;
-  using node_reference = node&;
   using pointer = T*;
   using const_pointer = const T*;
   using reference = value_type&;
@@ -22,11 +24,12 @@ public:
   Node(value_type value, size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)
     : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {};
 
-  node operator =(const node_reference other_node) {
-    this->ref_count_ = other_node->ref_count_;
-    this->prev_ = other_node->prev_;
-    this->next_ = other_node->next_;
+  node_reference operator =(node_const_reference other_node) {
+    this->ref_count_ = other_node.ref_count_;
+    this->prev_ = other_node.prev_;
+    this->next_ = other_node.next_;
     this->value_ = other_node.value_;
+    return *this;
   }
 
   value_type getValue() const {
