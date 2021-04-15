@@ -3,7 +3,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <algorithm>
-
+#include <iterator>
 
 
 class MergeException : std::exception {
@@ -73,7 +73,7 @@ public:
 
   void setRefCount(const size_type& new_value) {
     this->value_ = new_value;
-    this->checkEndRefCount();
+    //this->checkEndRefCount();
   }
 
   void checkEndRefCount() {
@@ -137,17 +137,14 @@ template <class T>
 class Iterator {
   friend class ConsistentList<T>;
 public:
-  // operator++
+  
   Iterator* operator++() {//pre
     //do smth
     this->ptr = this->ptr->getNext();
     
     this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
-    
-    //if (this->ptr->getPrev()->getRefCount() == 0) {
-    //  delete this->ptr->getPrev();
-    //}
-    
+    this->ptr->getPrev()->checkEndRefCount();
+
     return *this;
   }
 
@@ -155,11 +152,8 @@ public:
     this->ptr = this->ptr->getNext();
 
     this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
-    
-    //if (this->ptr->getPrev()->getRefCount() == 0) {
-    //  delete 
-    //}
-    
+    this->ptr->getPrev()->checkEndRefCount();
+
     return *this;
     //do smth
   }
@@ -169,7 +163,8 @@ public:
     this->ptr = this->ptr->getPrev();
     
     this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-    
+    this->ptr->getNext()->checkEndRefCount();
+
     return *this;
   }
 
@@ -177,6 +172,7 @@ public:
     this->ptr = this->ptr->getPrev();
 
     this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->checkEndRefCount();
 
     return *this;
     //do smth
@@ -207,16 +203,70 @@ private:
 };
 
 template <class T>
-class ConstIterator : public Iterator<T> {
+class ConstIterator {
   friend class List<T>;
 public:
-  // operator++
+  ConstIterator* operator++() {//pre
+    //do smth
+    this->ptr = this->ptr->getNext();
+
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
+    this->ptr->getPrev()->checkEndRefCount();
+
+    return *this;
+  }
+
+  ConstIterator* operator++(int) {//post
+    this->ptr = this->ptr->getNext();
+
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
+    this->ptr->getPrev()->checkEndRefCount();
+
+    return *this;
+    //do smth
+  }
   // operator--
+  ConstIterator* operator--() {//pre
+    //do smth
+    this->ptr = this->ptr->getPrev();
+
+    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->checkEndRefCount();
+
+    return *this;
+  }
+
+  ConstIterator* operator--(int) {//post
+    this->ptr = this->ptr->getPrev();
+
+    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->checkEndRefCount();
+
+    return *this;
+    //do smth
+  }
   // operator*
+  const T operator* () {
+    return this->ptr->getValue();
+  }
+
   // operator->
+  const Node<T>& operator ->() {
+    return this->ptr;
+  }
+
+
+  bool operator!=(ConstIterator it) {
+    return (this->ptr != it.ptr);
+  }
+
+  bool operator==(ConstIterator it) {
+    return (this->ptr == it.ptr);
+  }
 private:
-  //ConstIterator() = default;
-  //const Node<T>* ptr;
+  ConstIterator() = default;
+  ConstIterator(Node<T> ptr_) : ptr(ptr_) {};
+  Node<T>* ptr;
 };
 
 template<class T>
@@ -384,15 +434,20 @@ public:
 
   //+// это чисто про дефолтный функционал, ещё нужно прикрутить работу ссылками
   void push_front(const T& x) {
-    node_type tmp(x);
-    tmp.setNext(this->sentinel.getNext());
+    this->insert(std::next(this->begin()), x);
+    /*node_type* tmp = new node_type;
+    tmp->setValue(x);
+
+    tmp->setNext(this->sentinel.getNext());
     this->sentinel.getNext()->setPrev(&tmp);
     this->sentinel.setNext(&tmp);
-    tmp.setPrev(this->sentinel);
+    tmp->setPrev(this->sentinel);
     
-    //тут ещё работа с количество ссылок нужна
 
-    this->list_size++;
+
+    //тут ещё работа с количеством ссылок нужна
+
+    this->list_size++;*/
   };
   // void push_front(T&& x);
   //+/
@@ -403,15 +458,18 @@ public:
 
   //+//как с push_front
   void push_back(const T& x) {
-    node_type tmp(x);
-    tmp.setPrev(this->sentinel.getPrev());
+    this->insert(this->end(), x);
+    /*node_type* tmp = new node_type;
+    tmp->setValue(x);
+
+    tmp->setPrev(this->sentinel.getPrev());
     this->sentinel.getPrev->setNext(&tmp);
     this->sentinel.setPrev(&tmp);
-    tmp.setNext(&tmp);
+    tmp->setNext(this->sentinel);
 
-    //тут тоже работа с количество ссылок
+    //тут тоже работа с количеством ссылок
 
-    this->list_size++;
+    this->list_size++;*/
   };
   // void push_back(T&& x);
   //+//
@@ -420,26 +478,48 @@ public:
     //размер изменяется в erase
   };
 
+  //++++//
   iterator insert(const_iterator position, const T& x) {
-    
+    //node_type* inserted_node(*position);
+    //create node in memory
+    iterator pos(position->ptr);
+    node_type* inserted_node = new node_type;
+    inserted_node->setValue(x);
+    //insert //pos point to next after inserted element
+    inserted_node->setNext(pos.ptr);
+    inserted_node->setPrev(pos.ptr->getPrev());
+    pos.ptr->setPrev(inserted_node);
+    if (this->empty()) {
+      pos.ptr->setNext(inserted_node);
+      inserted_node->setRefCount(2);
+      pos.ptr->setRefCount(2);
+      return pos;
+    }
+    //work with ref count
+
+    inserted_node->setRefCount(3);//3 because have as min 1 pointing iterator
+    return pos;
   };
   // iterator insert(const_iterator position, T&& x);
   iterator insert(const_iterator position, size_type n, const T& x) {
+    iterator it_to_inserted_node;
     for (size_type i = 0; i < n; i++) {
-      //node_type* inserted_node(*position);
-      //create node in memory
-      node_type* inserted_node = new node_type;
-      inserted_node->setValue(x);
-      //insert //pos point to next after inserted element
-      inserted_node->setNext(position.)
-      //work with ref count
+      it_to_inserted_node = this->insert(position, x);
     }
+    return it_to_inserted_node;
   };
 
   template<class InputIterator>
-  iterator insert(const_iterator position, InputIterator first, InputIterator last);
+  iterator insert(const_iterator position, InputIterator first, InputIterator last) {
+    iterator it_to_inserted_node;
+    for (auto i = first; i != last; i++) {
+      it_to_inserted_node = this->insert(position, *it);
+    }
+    return it_to_inserted_node;
+  };
+  
   iterator insert(const_iterator position, std::initializer_list<T> init_list) {
-    this->insert(position, init_list.begin(), init_list.end());
+    return this->insert(position, init_list.begin(), init_list.end());
   };
 
   iterator erase(const_iterator position) {//мы заранее знаем позицию
@@ -567,9 +647,7 @@ private:
       //сделать соседним по +1;
     }//if last, will do nothing
 
-    if (deleted_node->getRefCount() == 0) {
-      delete deleted_node;
-    }
+    deleted_node->checkEndRefCount();
 
     this->list_size--;
   }
