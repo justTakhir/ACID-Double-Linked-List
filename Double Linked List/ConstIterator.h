@@ -70,10 +70,20 @@ public:
   }
 
   ~ConstIterator() {
-    this->ptr->subRefCount();
-    this->ptr->checkEndRefCount();
+    //this->ptr->subRefCount();
+    //this->ptr->checkEndRefCount();
+  }
+
+  ConstIterator prev() const {
+    return { this->ptr->getPrev() };
+  }
+
+  ConstIterator next() const {
+    return { this->ptr->getNext() };
   }
 private:
-  ConstIterator(Node<T>* ptr_) : ptr(ptr_) {};
+  ConstIterator(Node<T>* ptr_) : ptr(ptr_) {
+    //this->ptr->addRefCount();
+  }
   Node<T>* ptr;
 };

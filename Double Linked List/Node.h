@@ -2,7 +2,7 @@
 template<typename T>
 class Node {
 private:
-  using node = Node<value_type>;
+  using node = Node<T>;
   using node_pointer = node*;
   using node_reference = node&;
   using node_const_reference = const node&;
@@ -45,16 +45,16 @@ public:
   }
 
   void setRefCount(const size_type& new_ref_count) {
-    this->ref_count = new_ref_count;
+    this->ref_count_ = new_ref_count;
     //this->checkEndRefCount();
   }
 
   void addRefCount() {
-    this->ref_count++;
+    this->ref_count_++;
   }
 
   void subRefCount() {
-    this->ref_count--;
+    this->ref_count_--;
   }
 
   void checkEndRefCount() {
@@ -67,7 +67,7 @@ public:
     return this->prev_;
   }
 
-  void setPrev(node new_prev) {
+  void setPrev(node* new_prev) {
     this->prev_ = new_prev;
   }
 
@@ -75,7 +75,7 @@ public:
     return this->next_;
   }
 
-  void setNext(node new_next) {
+  void setNext(node* new_next) {
     this->next_ = new_next;
   }
 

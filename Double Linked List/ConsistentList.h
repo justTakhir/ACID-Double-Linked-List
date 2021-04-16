@@ -10,7 +10,7 @@
 #include "TrueNode.h"
 
 template<class T>
-class ÑonsistentList {
+class ConsistentList {
 public:
   using value_type = T;
   using pointer = T*;
@@ -26,44 +26,42 @@ public:
   // using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   //?++//
-  ÑonsistentList() = default;
+  ConsistentList() = default;
 
-  explicit ÑonsistentList(size_type n) {
+  explicit ConsistentList(size_type n) {
     for (size_type i = 0; i < n; i++) {
       push_front(NULL);
     }
   };
-  ÑonsistentList(size_type n, const T& value) {
+  ConsistentList(size_type n, const T& value) {
     for (size_type i = 0; i < n; i++) {
       push_front(value);
     }
   };
   //?//
   template<class InputIterator>
-  ÑonsistentList(InputIterator first, InputIterator last) {};
+  ConsistentList(InputIterator first, InputIterator last) {};
   //+//
-  ÑonsistentList(const ÑonsistentList& x) {
+  ConsistentList(const ConsistentList& x) {
     for (size_type i = 0; i < x.size(); i++) {
       this->push_back(*(x.begin() + i));
     }
   };
   // ÑonsistentList(ÑonsistentList&& x);
   //+//
-  ÑonsistentList(std::initializer_list<T> init_list) {
+  ConsistentList(std::initializer_list<T> init_list) {
     for (size_type i = 0; i < init_list.size(); i++) {
       push_front(init_list[i]);
     }
   };
   //+//
-  ~ÑonsistentList() {
+  ~ConsistentList() {
     for (size_type i = 0; i < this->size(); i++) {
       this->pop_back();
     }
-    delete this->list_size;
-    delete this->sentinel;
   };
   //+//
-  ÑonsistentList& operator=(const ÑonsistentList& x) {
+  ConsistentList& operator=(const ConsistentList& x) {
     for (size_type i = 0; i < this->size(); i++) {
       this->pop_back();
     }
@@ -74,7 +72,7 @@ public:
   };
   // ÑonsistentList& operator=(ÑonsistentList&& x)
   //+//
-  ÑonsistentList& operator=(std::initializer_list<T> init_list) {
+  ConsistentList& operator=(std::initializer_list<T> init_list) {
     for (size_type i = 0; i < this->size(); i++) {
       this->pop_back();
     }
@@ -125,7 +123,7 @@ public:
 
   //+//
   bool empty() const noexcept {
-    return(size == 0);
+    return(this->size() == 0);
   };
   //+//
   size_type size() const noexcept {
@@ -190,28 +188,25 @@ public:
   // void push_back(T&& x);
   //+//
   void pop_back() {
-    this->erase(this->end() - 1);
+    iterator it = --this->end();
+    this->erase(it);
   };
 
   //++++//
   iterator insert(const_iterator position, const T& x) {
-    //create node in memory
-    iterator pos(position->ptr);
-    node_type* inserted_node = new node_type;
+    //create node in memory// ñïðîñèòü ïðî const iterator
+    iterator pos(position.ptr);
+    node_type* inserted_node = new TrueNode<T>();
     inserted_node->setValue(x);
     //insert //pos point to next after inserted element
     inserted_node->setNext(pos.ptr);
     inserted_node->setPrev(pos.ptr->getPrev());
+    pos.ptr->getPrev()->setNext(inserted_node);
     pos.ptr->setPrev(inserted_node);
-    if (this->empty()) {
-      pos.ptr->setNext(inserted_node);
-      inserted_node->setRefCount(2);
-      pos.ptr->setRefCount(2);
-      return pos;
-    }
     //work with ref count
 
-    inserted_node->setRefCount(3);//3 because have as min 1 pointing iterator
+    //inserted_node->setRefCount(3);//3 because have as min 1 pointing iterator update: ïî-ìîåìó, ýòî òåïåðü è òàê áóäåò ïðîèñõîäèòü
+    this->list_size++;
     return pos;
   };
   // iterator insert(const_iterator position, T&& x);
@@ -237,13 +232,13 @@ public:
   };
 
   iterator erase(const_iterator position) {//ìû çàðàíåå çíàåì ïîçèöèþ
-    const_iterator new_position = position + 1;
+    const_iterator new_position = position.next();
     this->delete_node(position.ptr);//ïî çíà÷åíèþ íåëüçÿ, èáî íîäà ñ òàêèì æå çíà÷åíèåì ìîæåò âñòðåòèòüñÿ ðàíåå
-    return new_position;
+    return { new_position.ptr };
   };
   iterator erase(const_iterator position, const_iterator last) {};
   //+//
-  void swap(ÑonsistentList& other_list) {
+  void swap(ConsistentList& other_list) {
     //ñêîðåå âñåãî ìîæíî ïðîñòî ñâàïíóòü óêàçàòåëè íà ëèñòû èëè ÷òî-òî òàêîå, èáî ïî ôàêòó ïðîñòî íàçâàíèÿ ìåíÿþòñÿ))
     this->swap_nodes(&this->sentinel, &other_list.sentinel);
     std::swap(this->list_size, other_list.list_size);
@@ -266,7 +261,7 @@ public:
     }
   };
   //+//
-  void merge(ÑonsistentList& x) {
+  void merge(ConsistentList& x) {
   //äåëàåò èç äâóõ ñîðòàíóòûõ ïî âîçðàñòàíèþ ñïèñêîâ îäèí áîëüøîé ñîðòàíóòûé ïî âîçðàñòàíèþ ñïèñîê, âõîäíîé ÷èñòèòñÿ
     //if (!this->is_sorted_list()) {
     if (!std::is_sorted(this->begin(), this->end())) {
@@ -306,7 +301,7 @@ private:
   SentinelingNode<T> sentinel;
   size_type list_size;
 
-  bool is_sorted_list(ÑonsistentList& x) {
+  bool is_sorted_list(ConsistentList& x) {
     for (auto i = x.begin() + 1; i != x.end(); i++) {
       if (*(i - 1) > *i) {
         false;

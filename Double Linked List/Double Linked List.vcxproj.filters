@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Double_Linked_List.h">
+    <ClInclude Include="ConsistentList.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Iterator.h">

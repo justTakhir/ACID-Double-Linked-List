@@ -7,6 +7,13 @@ class Iterator {
   friend class ConsistentList<T>;
 public:
 
+  Iterator& operator=(const Iterator<T> other_iterator) {
+    this->ptr = other_iterator.ptr;
+    other_iterator.ptr->subRefCount();
+    this->ptr->addRefCount();
+    return *this;
+  }
+
   Iterator& operator++() {//pre
     //do smth
     this->ptr = this->ptr->getNext();
@@ -69,11 +76,31 @@ public:
   }
 
   ~Iterator() {
-    this->ptr->setRefCount(this->ptr->getRefCount() - 1);
+    this->ptr->subRefCount();
     this->ptr->checkEndRefCount();
   }
 
+  Iterator prev() const {
+    return { this->ptr->getPrev() };
+  }
+
+  Iterator next() const {
+    return { this->ptr->getNext() };
+  }
+
+  Iterator(const Iterator<T>& other) {
+    this->ptr = other.ptr;
+    this->ptr->addRefCount();
+  }
+
+  Iterator getPtr() {
+    return this->ptr;
+  }
+
 private:
-  Iterator(Node<T>* ptr_) : ptr(ptr_) {}
+  Iterator(Node<T>* ptr_) : ptr(ptr_) {
+    this->ptr->addRefCount();
+  }
+
   Node<T>* ptr;
 };
