@@ -7,9 +7,11 @@ class Iterator {
   friend class ConsistentList<T>;
 public:
 
-  Iterator& operator=(const Iterator<T> other_iterator) {
-    this->ptr = other_iterator.ptr;
-    other_iterator.ptr->subRefCount();
+  Iterator<T>& operator=(Iterator<T> other) {
+    this->ptr = other.ptr;
+    if (*this == other) {
+      other.ptr->subRefCount();
+    }
     this->ptr->addRefCount();
     return *this;
   }
@@ -53,12 +55,12 @@ public:
     return *this;
     //do smth
   }
-  // operator*
+  
   T& operator* () const {
     return this->ptr->getValue();
   }
 
-  // operator->
+  
   T* operator ->() const {
     return &this->ptr->getValue();
   }

@@ -5,7 +5,6 @@
 #include <iterator>
 #include "ConsistentListException.h"
 #include "Iterator.h"
-//#include "ConstIterator.h"
 #include "SentinelingNode.h"
 #include "TrueNode.h"
 
@@ -158,20 +157,18 @@ public:
   //++++//
   reference front() {
     return *this->begin();
-    //return this->sentinel.getNext()->getValue();
   };
   const_reference front() const {
     return front();
   };
   reference back() {
     return *std::prev(this->end());
-    //return sentinel.getPrev()->getValue();
   };
   const_reference back() const {
     return back();
   };
 
-  //+// это чисто про дефолтный функционал, ещё нужно прикрутить работу ссылками
+  //+// 
   void push_front(const T& x) {
     this->insert(std::next(this->begin()), x);
   };
@@ -197,17 +194,15 @@ public:
     //create node in memory// спросить про const iterator
     iterator pos(position.ptr);
     node_type* inserted_node = new TrueNode<T>();
+    //iterator pos(inserted_node);
     inserted_node->setValue(x);
     //insert //pos point to next after inserted element
     inserted_node->setNext(pos.ptr);
     inserted_node->setPrev(pos.ptr->getPrev());
     pos.ptr->getPrev()->setNext(inserted_node);
     pos.ptr->setPrev(inserted_node);
-    //work with ref count
-
-    //inserted_node->setRefCount(3);//3 because have as min 1 pointing iterator update: по-моему, это теперь и так будет происходить
     this->list_size++;
-    return pos;
+    return { inserted_node };
   };
   // iterator insert(const_iterator position, T&& x);
   iterator insert(const_iterator position, size_type n, const T& x) {
@@ -231,15 +226,14 @@ public:
     return this->insert(position, init_list.begin(), init_list.end());
   };
 
-  iterator erase(const_iterator position) {//мы заранее знаем позицию
+  iterator erase(const_iterator position) {
     const_iterator new_position = position.next();
-    this->delete_node(position.ptr);//по значению нельзя, ибо нода с таким же значением может встретиться ранее
+    this->delete_node(position.ptr);
     return { new_position.ptr };
   };
   iterator erase(const_iterator position, const_iterator last) {};
   //+//
   void swap(ConsistentList& other_list) {
-    //скорее всего можно просто свапнуть указатели на листы или что-то такое, ибо по факту просто названия меняются))
     this->swap_nodes(&this->sentinel, &other_list.sentinel);
     std::swap(this->list_size, other_list.list_size);
   };
@@ -261,15 +255,13 @@ public:
     }
   };
   //+//
-  void merge(ConsistentList& x) {
-  //делает из двух сортанутых по возрастанию списков один большой сортанутый по возрастанию список, входной чистится
-    //if (!this->is_sorted_list()) {
+  void merge(ConsistentList& x) { 
     if (!std::is_sorted(this->begin(), this->end())) {
       throw MergeException("List's must be ordered!!!");
     }
     size_type diff_size = std::max(this->size(), x.size()) - std::min(this->size(), x.size());
 
-    if (*this->begin() > *(x.end() - 1)) {//если 
+    if (*this->begin() > *(x.end() - 1)) { 
       for (size_type i = 0; i < diff_size; i++) {
         this->push_front(*std::prev(x.end(), 1 + i));
         x.pop_back();
@@ -282,13 +274,11 @@ public:
         x.pop_front();
       }
     }
-    //x.clear(); не нужно, ибо во время пушей и попов всё должно само подчиститься и добавиться где нужно
   };
   // void merge(list&& x);
 
   //+//
   void reverse() noexcept {
-    //может можно просто свапнуть итераторы, но мы такими путями ещё не умеем ходить, поэтому
     iterator it1 = this->begin(), it2 = this->end() - 1;
     for (size_type i = 0; i < this->size() / 2; i++) {
       this->swap_nodes(it1.ptr, it2.ptr);
@@ -349,7 +339,6 @@ private:
     if (!deleted_node->getPrev()->checkSentinel() && !deleted_node->getNext()->checkSentinel()) {//check for not last element in list
       deleted_node->getNext()->addRefCount();
       deleted_node->getPrev()->addRefCount();
-      //сделать соседним по +1;
     }//if last, will do nothing
 
     deleted_node->checkEndRefCount();

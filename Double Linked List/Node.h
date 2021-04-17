@@ -46,7 +46,6 @@ public:
 
   void setRefCount(const size_type& new_ref_count) {
     this->ref_count_ = new_ref_count;
-    //this->checkEndRefCount();
   }
 
   void addRefCount() {
