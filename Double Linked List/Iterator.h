@@ -90,13 +90,8 @@ public:
     return { this->ptr->getNext() };
   }
 
-  Iterator(const Iterator<T>& other) {
-    this->ptr = other.ptr;
+  Iterator(const Iterator<T>& other) : ptr(other.ptr) {
     this->ptr->addRefCount();
-  }
-
-  Iterator getPtr() {
-    return this->ptr;
   }
 
 private:

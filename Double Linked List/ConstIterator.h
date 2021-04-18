@@ -70,8 +70,8 @@ public:
   }
 
   ~ConstIterator() {
-    //this->ptr->subRefCount();
-    //this->ptr->checkEndRefCount();
+    this->ptr->subRefCount();
+    this->ptr->checkEndRefCount();
   }
 
   ConstIterator prev() const {
@@ -83,7 +83,7 @@ public:
   }
 private:
   ConstIterator(Node<T>* ptr_) : ptr(ptr_) {
-    //this->ptr->addRefCount();
+    this->ptr->addRefCount();
   }
   Node<T>* ptr;
 };
