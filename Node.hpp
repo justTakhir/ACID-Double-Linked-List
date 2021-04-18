@@ -1,4 +1,5 @@
 #pragma once
+
 template<typename T>
 class Node {
 private:
@@ -32,19 +33,19 @@ public:
     return *this;
   }
 
-  value_type getValue() const {
+  reference getValue() {
     return this->value_;
   }
 
-  void setValue(const size_type& new_value) {
+  void setValue(const_reference new_value) {
     this->value_ = new_value;
   }
 
-  size_type getRefCount() const {
+  size_t getRefCount() const {
     return this->ref_count_;
   }
 
-  void setRefCount(const size_type& new_ref_count) {
+  void setRefCount(const size_t& new_ref_count) {
     this->ref_count_ = new_ref_count;
   }
 
