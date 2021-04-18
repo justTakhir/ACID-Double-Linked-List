@@ -1,13 +1,15 @@
 #pragma once
-#include "Node.h"
+
+#include "Node.hpp"
 
 template<typename T>
 class TrueNode : public Node<T> {
 private:
 public:
-  TrueNode() :
-    Node<T>(T {}, 2, nullptr, nullptr) {};
+  TrueNode() : Node<T>(T(), 2, nullptr, nullptr) {}
+
   bool checkSentinel() override {
     return false;
   }
+  
 };
