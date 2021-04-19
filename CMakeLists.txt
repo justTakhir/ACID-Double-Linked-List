@@ -13,22 +13,22 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_library(consistent-list
-    ConsistentList.hpp
-    ConsistentListException.hpp
-    ConstIterator.hpp
-    Iterator.hpp
-    Node.hpp
-    SentinelNode.hpp
-    TrueNode.hpp
+add_library(consistent-list INTERFACE)
+target_include_directories(consistent-list INTERFACE ${PROJECT_SOURCE_DIR}/src)
+target_sources(consistent-list INTERFACE
+    ${PROJECT_SOURCE_DIR}/src/ConsistentList.hpp
+    ${PROJECT_SOURCE_DIR}/src/ConsistentListException.hpp
+    ${PROJECT_SOURCE_DIR}/src/ConstIterator.hpp
+    ${PROJECT_SOURCE_DIR}/src/Iterator.hpp
+    ${PROJECT_SOURCE_DIR}/src/Node.hpp
+    ${PROJECT_SOURCE_DIR}/src/SentinelNode.hpp
+    ${PROJECT_SOURCE_DIR}/src/TrueNode.hpp
 )
-
-set_target_properties(consistent-list PROPERTIES LINKER_LANGUAGE CXX)
 
 enable_testing()
 
 add_executable(consistent-list-tests Tests.cpp)
-target_link_libraries(consistent-list-tests gtest_main)
+target_link_libraries(consistent-list-tests consistent-list gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(consistent-list-tests)

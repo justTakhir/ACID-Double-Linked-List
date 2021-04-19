@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "ConsistentList.hpp"
+#include <ConsistentList.hpp>
 
 TEST(InsertTest, Test1) {
   ConsistentList<int> list;

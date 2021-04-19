@@ -33,7 +33,7 @@ public:
       this->push_front(value_type());
     }
   }
-  ConsistentList(size_type n, const T& value) {
+  ConsistentList(size_type n, const_reference value) {
     for (size_type i = 0; i < n; i++) {
       this->push_front(value);
     }
@@ -272,7 +272,7 @@ public:
 
 private:
   SentinelNode<T> sentinel;
-  size_type list_size;
+  size_type list_size = size_type();
 
   static void swap_nodes(node_type* node1, node_type* node2) { // todo
     node_type* buf_ptr = node1;
