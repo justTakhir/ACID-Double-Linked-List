@@ -9,6 +9,18 @@ public:
   const char* what() const throw() override {
     return message.c_str();
   }
+
+private:
+  std::string message;
+};
+
+class IteratorDereferencingException : std::exception {
+public:
+  explicit IteratorDereferencingException(std::string mes) : message(std::move(mes)) {};
+  const char* what() const throw() override {
+    return message.c_str();
+  }
+
 private:
   std::string message;
 };

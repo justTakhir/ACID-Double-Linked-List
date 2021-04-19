@@ -41,8 +41,8 @@ public:
 
   template<class InputIterator>
   ConsistentList(InputIterator first, InputIterator last) {
-    for (auto it = first; it != last; it++) {
-      this->push_back(*it);
+    for (; first != last; first++) {
+      this->push_back(*first);
     }
   }
 
@@ -53,11 +53,8 @@ public:
   }
   // ConsistentList(ConsistentList&& x);
 
-  ConsistentList(std::initializer_list<T> init_list) {
-    for (auto it = init_list.begin(); it != init_list.end(); it++) {
-      this->push_back(*it);
-    }
-  }
+  ConsistentList(std::initializer_list<T> init_list)
+    : ConsistentList(init_list.begin(), init_list.end()) {}
 
   ~ConsistentList() {
     this->clear();
@@ -75,8 +72,8 @@ public:
 
   ConsistentList& operator=(std::initializer_list<T> init_list) {
     this->clear();
-    for (size_type i = 0; i < init_list.size(); i++) {
-      this->push_back(init_list[i]);
+    for (auto it = init_list.begin(); it != init_list.end(); it++) {
+      this->push_back(*it);
     }
 
     return *this;
@@ -178,10 +175,7 @@ public:
   iterator insert(const_iterator position, const T& x) {
     iterator pos(position.ptr);
 
-    node_type* inserted_node = new TrueNode<T>();
-    inserted_node->setValue(x);
-    inserted_node->setNext(pos.ptr);
-    inserted_node->setPrev(pos.ptr->getPrev());
+    node_type* inserted_node = new TrueNode<T>(x, pos.ptr, pos.ptr->getPrev());
 
     pos.ptr->getPrev()->setNext(inserted_node);
     pos.ptr->setPrev(inserted_node);

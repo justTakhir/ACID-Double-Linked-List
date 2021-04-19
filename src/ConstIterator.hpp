@@ -10,88 +10,94 @@ class Iterator;
 
 template <class T>
 class ConstIterator {
-    friend class ConsistentList<T>;
-    friend class Iterator<T>;
+  friend class ConsistentList<T>;
+  friend class Iterator<T>;
+
 public:
-    ConstIterator& operator=(const ConstIterator& other) {
-        this->ptr->subRefCount();
-        this->ptr = other.ptr;
-        this->ptr->addRefCount();
-        return *this;
-    }
+  ConstIterator(const ConstIterator& other) : ptr(other.ptr) {
+    this->ptr->addRefCount();
+  }
 
-    ConstIterator& operator++() {//pre
-      //do smth
-        this->ptr = this->ptr->getNext();
+  ~ConstIterator() {
+    this->ptr->subRefCount();
+    this->ptr->checkEndRefCount();
+  }
 
-        this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
-        this->ptr->getPrev()->checkEndRefCount();
+  ConstIterator& operator=(const ConstIterator& other) {
+    this->ptr->subRefCount();
+    this->ptr = other.ptr;
+    this->ptr->addRefCount();
+    return *this;
+  }
 
-        return *this;
-    }
+  ConstIterator& operator++() {//pre
+    //do smth
+    this->ptr = this->ptr->getNext();
 
-    ConstIterator& operator++(int) {//post
-        this->ptr = this->ptr->getNext();
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
+    this->ptr->getPrev()->checkEndRefCount();
 
-        this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
-        this->ptr->getPrev()->checkEndRefCount();
+    return *this;
+  }
 
-        return *this;
-        //do smth
-    }
-    // operator--
-    ConstIterator& operator--() {//pre
-      //do smth
-        this->ptr = this->ptr->getPrev();
+  ConstIterator& operator++(int) {//post
+    this->ptr = this->ptr->getNext();
 
-        this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-        this->ptr->getNext()->checkEndRefCount();
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
+    this->ptr->getPrev()->checkEndRefCount();
 
-        return *this;
-    }
+    return *this;
+    //do smth
+  }
+  // operator--
+  ConstIterator& operator--() {//pre
+    //do smth
+    this->ptr = this->ptr->getPrev();
 
-    ConstIterator& operator--(int) {//post
-        this->ptr = this->ptr->getPrev();
+    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->checkEndRefCount();
 
-        this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
-        this->ptr->getNext()->checkEndRefCount();
+    return *this;
+  }
 
-        return *this;
-        //do smth
-    }
-    // operator*
-    const T& operator* () const {
-        return this->ptr->getValue();
-    }
+  ConstIterator& operator--(int) {//post
+    this->ptr = this->ptr->getPrev();
 
-    // operator->
-    const T* operator ->() const {
-        return this->ptr->getValue();
-    }
+    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->checkEndRefCount();
 
-    bool operator!=(ConstIterator it) const {
-        return (this->ptr != it.ptr);
-    }
+    return *this;
+    //do smth
+  }
+  // operator*
+  const T& operator* () const {
+    return this->ptr->getValue();
+  }
 
-    bool operator==(ConstIterator it) const {
-        return (this->ptr == it.ptr);
-    }
+  // operator->
+  const T* operator ->() const {
+    return this->ptr->getValue();
+  }
 
-    ~ConstIterator() {
-        this->ptr->subRefCount();
-        this->ptr->checkEndRefCount();
-    }
+  bool operator!=(ConstIterator it) const {
+    return (this->ptr != it.ptr);
+  }
 
-    ConstIterator prev() const {
-        return { this->ptr->getPrev() };
-    }
+  bool operator==(ConstIterator it) const {
+    return (this->ptr == it.ptr);
+  }
 
-    ConstIterator next() const {
-        return { this->ptr->getNext() };
-    }
+  ConstIterator prev() const {
+    return { this->ptr->getPrev() };
+  }
+
+  ConstIterator next() const {
+    return { this->ptr->getNext() };
+  }
+
 private:
-    ConstIterator(Node<T>* ptr_) : ptr(ptr_) {
-        this->ptr->addRefCount();
-    }
-    Node<T>* ptr;
+  ConstIterator(Node<T>* ptr_) : ptr(ptr_) {
+    this->ptr->addRefCount();
+  }
+  Node<T>* ptr;
 };

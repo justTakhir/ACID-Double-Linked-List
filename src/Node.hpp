@@ -2,50 +2,32 @@
 
 template<typename T>
 class Node {
-private:
+protected:
   using node = Node<T>;
   using node_pointer = node*;
   using node_reference = node&;
   using node_const_reference = const node&;
-
-  T value_;
-  Node<T>* prev_;// this is first if = null
-  Node<T>* next_;// this is last if = null
-  size_t ref_count_;
-public:
-  using value_type = T;
-  using pointer = T*;
-  using const_pointer = const T*;
-  using reference = value_type&;
-  using const_reference = const value_type&;
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
-  Node() {};
 
-  Node(value_type value, size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)
-    : value_(value), ref_count_(ref_count), prev_(prev), next_(next) {};
+private:
+  node_pointer prev_;// this is first if = null
+  node_pointer next_;// this is last if = null
+  size_type ref_count_;
 
+public:
   node_reference operator =(node_const_reference other_node) {
     this->ref_count_ = other_node.ref_count_;
     this->prev_ = other_node.prev_;
     this->next_ = other_node.next_;
-    this->value_ = other_node.value_;
     return *this;
   }
 
-  reference getValue() {
-    return this->value_;
-  }
-
-  void setValue(const_reference new_value) {
-    this->value_ = new_value;
-  }
-
-  size_t getRefCount() const {
+  size_type getRefCount() const {
     return this->ref_count_;
   }
 
-  void setRefCount(const size_t& new_ref_count) {
+  void setRefCount(const size_type& new_ref_count) {
     this->ref_count_ = new_ref_count;
   }
 
@@ -80,4 +62,8 @@ public:
   }
 
   virtual bool checkSentinel() = 0;
+
+protected:
+  Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)
+    : ref_count_(ref_count), prev_(prev), next_(next) {}
 };
