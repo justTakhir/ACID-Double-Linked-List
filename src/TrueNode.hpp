@@ -14,8 +14,8 @@ public:
   using reference = value_type&;
   using const_reference = const value_type&;
 
-  TrueNode(const_reference value, node_pointer next, node_pointer prev)
-    : Node<T>(2, next, prev), value_(value) {}
+  TrueNode(const_reference value, node_pointer prev, node_pointer next)
+    : Node<T>(2, prev, next), value_(value) {}
 
   TrueNode& operator= (const TrueNode& other) {
     Node<T>::operator= (other);

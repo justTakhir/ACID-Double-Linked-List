@@ -37,7 +37,7 @@ public:
   Iterator& operator++(int) {//post
     this->ptr = this->ptr->getNext();
 
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
+    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
     this->ptr->getPrev()->checkEndRefCount();
 
     return *this;

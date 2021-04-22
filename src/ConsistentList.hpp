@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <algorithm>
 #include <iterator>
+#include <type_traits>
 
 #include "ConsistentListException.hpp"
 #include "Iterator.hpp"
@@ -77,6 +78,26 @@ public:
     }
 
     return *this;
+  }
+
+  bool operator==(const std::list<T>& std_list) {
+    
+    if (this->size() != std_list.size()) {
+      return false;
+    }
+    
+    auto this_it = this->begin();
+    auto std_list_it = std_list.begin();
+    
+    while (this_it != this->end()) {
+      if (*this_it != *std_list_it) {
+        return false;
+      }
+      this_it++;
+      std_list_it++;
+    }
+
+    return true;
   }
 
   template<class InputIterator>
@@ -175,35 +196,39 @@ public:
   iterator insert(const_iterator position, const T& x) {
     iterator pos(position.ptr);
 
-    node_type* inserted_node = new TrueNode<T>(x, pos.ptr, pos.ptr->getPrev());
+    node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
+
+    //inserted_node->getPrev()->setNext(inserted_node);
+    //inserted_node->getNext()->setPrev(inserted_node);
 
     pos.ptr->getPrev()->setNext(inserted_node);
+    
     pos.ptr->setPrev(inserted_node);
-
+    
     this->list_size++;
 
     return { inserted_node };
   }
 
   iterator insert(const_iterator position, size_type n, const T& x) {
-    iterator it_to_inserted_node;
+    iterator it_to_inserted_node(position.ptr);
     for (size_type i = 0; i < n; i++) {
-      it_to_inserted_node = this->insert(position, x);
+      it_to_inserted_node = this->insert(it_to_inserted_node, x);
     }
     return it_to_inserted_node;
   }
 
-  template<class InputIterator>
+  template<class InputIterator, std::enable_if_t<std::_Is_iterator_v<InputIterator>, int> = 0>
   iterator insert(const_iterator position, InputIterator first, InputIterator last) {
-    iterator it_to_inserted_node;
-    for (auto it = first; it != last; it++) {
-      it_to_inserted_node = this->insert(position, *it);
+    iterator it_to_inserted_node(position.ptr);
+    for(; last != first; last--){//--?
+      it_to_inserted_node = this->insert(it_to_inserted_node, *last);
     }
-    return it_to_inserted_node;
+    return this->insert(it_to_inserted_node, *last);
   }
 
   iterator insert(const_iterator position, std::initializer_list<T> init_list) {
-    return this->insert(position, init_list.begin(), init_list.end());
+    return this->insert(position, init_list.begin(), std::prev(init_list.end()));
   }
 
   iterator erase(const_iterator position) {
