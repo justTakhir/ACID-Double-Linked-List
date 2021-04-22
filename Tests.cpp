@@ -34,8 +34,8 @@ TEST(InsertTest, Test1) {
   ASSERT_TRUE(*it4 == *std_it4);
   ASSERT_TRUE(*it4 == 0);
 
-  //auto it5 = list.insert(list.cend(), it3, it4);
-  //auto std_it5 = std_list.insert(std_list.end(), std_it3, std_it4);
+  auto it5 = list.insert(list.end(), std_it2, std_it4);
+  auto std_it5 = std_list.insert(std_list.end(), std_it2, std_it4);
   ASSERT_TRUE(list == std_list);
 
 }

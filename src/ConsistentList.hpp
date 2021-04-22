@@ -220,15 +220,21 @@ public:
 
   template<class InputIterator, std::enable_if_t<std::_Is_iterator_v<InputIterator>, int> = 0>
   iterator insert(const_iterator position, InputIterator first, InputIterator last) {
-    iterator it_to_inserted_node(position.ptr);
-    for(; last != first; last--){//--?
-      it_to_inserted_node = this->insert(it_to_inserted_node, *last);
+    /*iterator it_to_inserted_node(position.ptr);
+    for(; first != last; first++){//--?
+      it_to_inserted_node = this->insert(it_to_inserted_node, *first);
     }
-    return this->insert(it_to_inserted_node, *last);
+    return it_to_inserted_node;*/
+    iterator it_to_inserted_node(position.ptr);
+    auto it = std::prev(last);
+    for (; it != first; it--) {//--?
+      it_to_inserted_node = this->insert(it_to_inserted_node, *it);
+    }
+    return this->insert(it_to_inserted_node, *it);
   }
 
   iterator insert(const_iterator position, std::initializer_list<T> init_list) {
-    return this->insert(position, init_list.begin(), std::prev(init_list.end()));
+    return this->insert(position, init_list.begin(), init_list.end());
   }
 
   iterator erase(const_iterator position) {
