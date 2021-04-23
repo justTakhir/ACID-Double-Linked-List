@@ -40,7 +40,7 @@ public:
     }
   }
 
-  template<class InputIterator>
+  template<class InputIterator, std::enable_if_t<std::_Is_iterator_v<InputIterator>, int> = 0>
   ConsistentList(InputIterator first, InputIterator last) {
     for (; first != last; first++) {
       this->push_back(*first);
@@ -176,7 +176,7 @@ public:
   }
 
   void push_front(const T& x) {
-    this->insert(this->begin().next(), x);
+    this->insert(this->begin(), x);
   }
   // void push_front(T&& x);
 
@@ -197,9 +197,6 @@ public:
     iterator pos(position.ptr);
 
     node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
-
-    //inserted_node->getPrev()->setNext(inserted_node);
-    //inserted_node->getNext()->setPrev(inserted_node);
 
     pos.ptr->getPrev()->setNext(inserted_node);
     
@@ -268,11 +265,27 @@ public:
     if (!std::is_sorted(this->begin(), this->end())) {
       throw MergeException("List's must be ordered!!!");
     }
-    size_type diff_size = std::max(this->size(), x.size()) - std::min(this->size(), x.size());
+    if (*this->begin() >= *x.end().prev()) {
+      for (auto it = x.begin(); it != x.end(); it++) {
+        this->push_front(*it);
+      }
+      x.clear();
+      return;
+    }
+    if (*this->end().prev() <= *x.begin()) {
+      for (auto it = x.begin(); it != x.end(); it++) {
+        this->push_back(*it);
+      }
+      x.clear();
+      return;
+    }
+    /*size_type diff_size = std::max(this->size(), x.size()) - std::min(this->size(), x.size());
 
     if (*this->begin() > *x.end().prev()) {
       for (size_type i = 0; i < diff_size; i++) {
-        this->push_front(*std::prev(x.end(), 1 + i));
+        iterator merged_node(x.end().prev().ptr);
+        this->push_front(*merged_node);
+        merged_node--;
         x.pop_back();
       }
     }
@@ -282,7 +295,7 @@ public:
         this->push_back(*x.begin());
         x.pop_front();
       }
-    }
+    }*/
   }
   // void merge(list&& x);
 
@@ -318,16 +331,24 @@ private:
   }
 
   node_type* search_node(node_type* start_node, const_reference value) {
-    TrueNode<T>* searched_node = start_node;
-    while (searched_node != this->sentinel && searched_node->getValue() != value) {
-      searched_node = searched_node->getNext();
+    //TrueNode<T>* searched_node = start_node;
+    //while (!searched_node->checkSentinel() && searched_node->getValue() != value) {
+    //  searched_node = searched_node->getNext();
+    //}
+
+    const_iterator it(start_node);
+    while (it != this->end() && *it != value) {
+      it++;
     }
 
-    if (searched_node == this->sentinel) {
+    //if (searched_node->checkSentinel()) {
+    //  return nullptr;
+    //}
+    if (it == this->end()) {
       return nullptr;
     }
 
-    return searched_node;
+    return it.ptr;
   }
 
   void delete_node(node_type* deleted_node) {

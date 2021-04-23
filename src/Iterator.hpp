@@ -27,8 +27,9 @@ public:
   Iterator& operator++() {//pre
     //do smth
     this->ptr = this->ptr->getNext();
+    this->ptr->addRefCount();
 
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
+    this->ptr->getPrev()->subRefCount();
     this->ptr->getPrev()->checkEndRefCount();
 
     return *this;
@@ -36,8 +37,9 @@ public:
 
   Iterator& operator++(int) {//post
     this->ptr = this->ptr->getNext();
+    this->ptr->addRefCount();
 
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
+    this->ptr->getPrev()->subRefCount();
     this->ptr->getPrev()->checkEndRefCount();
 
     return *this;
@@ -47,8 +49,9 @@ public:
   Iterator& operator--() {//pre
     //do smth
     this->ptr = this->ptr->getPrev();
+    this->ptr->addRefCount();
 
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->subRefCount();
     this->ptr->getNext()->checkEndRefCount();
 
     return *this;
@@ -56,8 +59,9 @@ public:
 
   Iterator& operator--(int) {//post
     this->ptr = this->ptr->getPrev();
+    this->ptr->addRefCount();
 
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->subRefCount();
     this->ptr->getNext()->checkEndRefCount();
 
     return *this;

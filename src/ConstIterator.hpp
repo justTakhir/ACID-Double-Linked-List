@@ -33,8 +33,9 @@ public:
   ConstIterator& operator++() {//pre
     //do smth
     this->ptr = this->ptr->getNext();
+    this->ptr->addRefCount();
 
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount() - 1);
+    this->ptr->getPrev()->subRefCount();
     this->ptr->getPrev()->checkEndRefCount();
 
     return *this;
@@ -42,8 +43,9 @@ public:
 
   ConstIterator& operator++(int) {//post
     this->ptr = this->ptr->getNext();
+    this->ptr->addRefCount();
 
-    this->ptr->getPrev()->setRefCount(this->ptr->getPrev()->getRefCount - 1);
+    this->ptr->getPrev()->subRefCount();
     this->ptr->getPrev()->checkEndRefCount();
 
     return *this;
@@ -53,8 +55,9 @@ public:
   ConstIterator& operator--() {//pre
     //do smth
     this->ptr = this->ptr->getPrev();
+    this->ptr->addRefCount();
 
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->subRefCount();
     this->ptr->getNext()->checkEndRefCount();
 
     return *this;
@@ -62,21 +65,29 @@ public:
 
   ConstIterator& operator--(int) {//post
     this->ptr = this->ptr->getPrev();
+    this->ptr->addRefCount();
 
-    this->ptr->getNext()->setRefCount(this->ptr->getNext()->getRefCount() - 1);
+    this->ptr->getNext()->subRefCount();
     this->ptr->getNext()->checkEndRefCount();
 
     return *this;
     //do smth
   }
   // operator*
-  const T& operator* () const {
-    return this->ptr->getValue();
+  T& operator* () const {
+    if (this->ptr->checkSentinel()) {
+      throw IteratorDereferencingException("Try to dereferencing end iterator.");
+    }
+    TrueNode<T>* ptr = dynamic_cast<TrueNode<T>*>(this->ptr);
+    if (ptr == nullptr) {
+      std::abort();
+    }
+    return ptr->getValue();
   }
 
   // operator->
-  const T* operator ->() const {
-    return this->ptr->getValue();
+  T* operator ->() const {
+    return &this->ptr->getValue();
   }
 
   bool operator!=(ConstIterator it) const {
