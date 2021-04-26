@@ -7,6 +7,176 @@
 
 //no test for begin(), end()
 
+static int my_rand(int min = 1, int max = 33676) {
+  static std::random_device rd;
+  static std::mt19937 mersenne(rd());
+  //std::uniform_int_distribution<> distrib(min, max);
+  return min + mersenne() % (max - min);
+}
+
+TEST(IteratorTest, IteratorDereferencing) {
+  ConsistentList<int32_t> list = {1, 3, 5};
+  Iterator<int32_t> it = list.begin();
+  ASSERT_TRUE(*it == 1);
+  it--;
+  
+  ASSERT_THROW(*it, IteratorDereferencingException);
+  ASSERT_THROW(*list.end(), IteratorDereferencingException);
+}
+
+TEST(IteratorTest, IteratorDecriment1) {
+  ConsistentList<int32_t> list = { 1, 3, 5 };
+  Iterator<int32_t> it = list.begin();
+  
+  it--;
+  ASSERT_TRUE(it == list.end());
+
+  it--;
+  ASSERT_TRUE(*it == 5);
+
+  --it;
+  ASSERT_TRUE(*it == 3);
+
+  --it;
+  ASSERT_TRUE(*it == 1);
+}
+
+TEST(IteratorTest, IteratorPrefixDecriment2) {
+  ConsistentList<int32_t> list = { 1, 3, 5 };
+  Iterator<int32_t> it = list.begin();
+
+  auto it1 = --it;
+  ASSERT_TRUE(it1 == list.end());
+  ASSERT_TRUE(it == list.end());
+}
+
+TEST(IteratorTest, IteratorPostfixDecriment2) {
+  ConsistentList<int32_t> list = { 1, 3, 5 };
+  Iterator<int32_t> it = list.begin();
+
+  auto it1 = it--;
+  ASSERT_TRUE(it1 == list.begin());
+  ASSERT_TRUE(it == list.end());
+}
+
+TEST(IteratorTest, IteratorIncrement) {
+  ConsistentList<int32_t> list = { 1, 3, 5 };
+  Iterator<int32_t> it = list.begin();
+
+  it++;
+  ASSERT_TRUE(*it == 3);
+
+  it++;
+  ASSERT_TRUE(*it == 5);
+
+  ++it;
+  ASSERT_TRUE(it == list.end());
+
+  ++it;
+  ASSERT_TRUE(*it == 1);
+  ASSERT_TRUE(it == list.begin());
+}
+
+TEST(IteratorTest, IteratorPrefixIncriment2) {
+  ConsistentList<int32_t> list = { 1, 3, 5 };
+  Iterator<int32_t> it = list.begin();
+
+  auto it1 = ++it;
+  ASSERT_TRUE(*it1 == 3);
+  ASSERT_TRUE(*it == 3);
+}
+
+TEST(IteratorTest, IteratorPostfixIncriment2) {
+  ConsistentList<int32_t> list = { 1, 3, 5 };
+  Iterator<int32_t> it = list.begin();
+
+  auto it1 = it++;
+  ASSERT_TRUE(it1 == list.begin());
+  ASSERT_TRUE(*it == 3);
+}
+/////////////////////////////////////////////////////////
+TEST(ConstIteratorTest, ConstIteratorDereferencing) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  ConstIterator<int32_t> it = list.begin();
+  ASSERT_TRUE(*it == 2);
+  it--;
+
+  ASSERT_THROW(*it, IteratorDereferencingException);
+  ASSERT_THROW(*list.end(), IteratorDereferencingException);
+}
+
+TEST(ConstIteratorTest, ConstIteratorDecriment) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  ConstIterator<int32_t> it = list.begin();
+
+  it--;
+  ASSERT_TRUE(it == list.end());
+
+  it--;
+  ASSERT_TRUE(*it == 6);
+
+  --it;
+  ASSERT_TRUE(*it == 4);
+
+  --it;
+  ASSERT_TRUE(*it == 2);
+}
+
+TEST(ConstIteratorTest, ConstIteratorPrefixDecriment2) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  Iterator<int32_t> it = list.begin();
+
+  auto it1 = --it;
+  ASSERT_TRUE(it1 == list.end());
+  ASSERT_TRUE(it == list.end());
+}
+
+TEST(ConstIteratorTest, ConstIteratorPostfixDecriment2) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  Iterator<int32_t> it = list.begin();
+
+  auto it1 = it--;
+  ASSERT_TRUE(it1 == list.begin());
+  ASSERT_TRUE(it == list.end());
+}
+
+TEST(ConstIteratorTest, ConstIteratorIncrement) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  ConstIterator<int32_t> it = list.begin();
+
+  it++;
+  ASSERT_TRUE(*it == 4);
+
+  it++;
+  ASSERT_TRUE(*it == 6);
+
+  ++it;
+  ASSERT_TRUE(it == list.end());
+
+  ++it;
+  ASSERT_TRUE(*it == 2);
+  ASSERT_TRUE(it == list.begin());
+}
+
+TEST(ConstIteratorTest, ConstIteratorPrefixIncriment2) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  ConstIterator<int32_t> it = list.begin();
+
+  auto it1 = ++it;
+  ASSERT_TRUE(*it1 == 4);
+  ASSERT_TRUE(*it == 4);
+}
+
+TEST(ConstIteratorTest, ConstIteratorPostfixIncriment2) {
+  ConsistentList<int32_t> list = { 2, 4, 6 };
+  ConstIterator<int32_t> it = list.begin();
+
+  auto it1 = it++;
+  ASSERT_TRUE(it1 == list.begin());
+  ASSERT_TRUE(*it == 4);
+}
+/////////////////////////////////////////////
+
 TEST(InsertTest, AllInsert) {
   ConsistentList<double_t> list;
   std::list<double_t> std_list;
@@ -44,11 +214,14 @@ TEST(InsertTest, AllInsert) {
 }
 
 TEST(InsertTest, PushFront) {
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+
   ConsistentList<int32_t> list;
   std::list<int32_t> std_list;
   
   for (size_t i = 0; i < 10; i++) {
-    int32_t new_node = std::rand();
+    int32_t new_node = mersenne();
     list.push_front(new_node);
     std_list.push_front(new_node);
   }
@@ -57,11 +230,14 @@ TEST(InsertTest, PushFront) {
 }
 
 TEST(InsertTest, PushBack) {
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+
   ConsistentList<double_t> list;
   std::list<double_t> std_list;
 
   for (size_t i = 0; i < 10; i++) {
-    int32_t new_node = std::rand();
+    int32_t new_node = mersenne();
     list.push_back(new_node);
     std_list.push_back(new_node);
   }
@@ -70,10 +246,24 @@ TEST(InsertTest, PushBack) {
 }
 /////////////////////////////////////////////
 TEST(DeleteTest, AllEraseTest) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  ConsistentList<double_t> list = { 1, 2, 3, 4, 5 };
+  std::list<double_t> std_list = { 1, 2, 3, 4, 5};
+  auto it3 = list.begin().next().next();
+  auto std_it3 = std::next(std_list.begin(), 2);
+  auto it4 = list.erase(it3);
+  auto std_it4 = std_list.erase(std_it3);
+  ASSERT_TRUE(list == std_list);
+  ASSERT_TRUE(*it4 == *std_it4);
 
+  list.erase(list.begin(), it4);
+  std_list.erase(std_list.begin(), std_it4);
+  ASSERT_TRUE(list == std_list);
+  
+}
 
+TEST(DeleteTest, EraseEnd) {
+  ConsistentList<double_t> list = { 1, 2, 3, 4, 5 };
+  ASSERT_THROW(list.erase(list.end()), EraseException);
 }
 
 TEST(DeleteTest, PopFront) {
@@ -115,8 +305,23 @@ TEST(DeleteTest, PopBack) {
 }
 
 TEST(DeleteTest, Clear) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+  size_t lists_size = mersenne() / 5000000;
+  ConsistentList<uint64_t> list(lists_size);
+  std::list<uint64_t> std_list(lists_size);
+  ASSERT_TRUE(list == std_list);
+
+  for (auto it = list.begin(); it != list.end(); it++) {
+    uint64_t new_node = mersenne();
+    list.push_front(new_node);
+    std_list.push_front(new_node);
+    ASSERT_TRUE(list == std_list);
+  }
+
+  list.clear();
+  std_list.clear();
+  ASSERT_TRUE(list == std_list);
 }
 
 TEST(DeleteTest, Remove) {
@@ -170,7 +375,8 @@ TEST(SizeTest, Size) {
 TEST(SizeTest, Empty) {
   std::random_device rd;
   std::mt19937 mersenne(rd());
-  size_t lists_size = mersenne() / 50000000;
+  std::uniform_int_distribution<> distrib(1, 6);
+  size_t lists_size = 1 + mersenne() / 50000000;
   ConsistentList<int16_t> list(lists_size);
   std::list<int16_t> std_list(lists_size);
 
@@ -187,20 +393,93 @@ TEST(SizeTest, Empty) {
 }
 
 TEST(ResizeTest, Resize) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+  size_t lists_size = mersenne() / 5000000;
+  ConsistentList<float_t> list(lists_size);
+  std::list<float_t> std_list(lists_size);
+  ASSERT_TRUE(list == std_list);
 
-  
+  for (auto it = list.begin(); it != list.end(); it++) {
+    float_t new_node = mersenne();
+    list.push_front(new_node);
+    std_list.push_front(new_node);
+    ASSERT_TRUE(list == std_list);
+  }
+  //<
+  list.resize(lists_size / 2);
+  std_list.resize(lists_size / 2);
+  ASSERT_TRUE(list == std_list);
+  //>
+  list.resize(lists_size * 3);
+  std_list.resize(lists_size * 3);
+  ASSERT_TRUE(list == std_list);
+  //==
+  list.resize(lists_size * 3);
+  std_list.resize(lists_size * 3);
+  ASSERT_TRUE(list == std_list);
 }
 
 TEST(ResizeTest, ResizeWithValue) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+  size_t lists_size = mersenne() / 5000000;
+  ConsistentList<double_t> list(lists_size);
+  std::list<double_t> std_list(lists_size);
+  ASSERT_TRUE(list == std_list);
+
+  for (auto it = list.begin(); it != list.end(); it++) {
+    double_t new_node = mersenne();
+    list.push_front(new_node);
+    std_list.push_front(new_node);
+    ASSERT_TRUE(list == std_list);
+  }
+  //<
+  double_t new_node = mersenne();
+  list.resize(lists_size / 2, new_node);
+  std_list.resize(lists_size / 2, new_node);
+  ASSERT_TRUE(list == std_list);
+  //>
+  new_node = mersenne();
+  list.resize(lists_size * 3, new_node);
+  std_list.resize(lists_size * 3, new_node);
+  ASSERT_TRUE(list == std_list);
+  //==
+  new_node = mersenne();
+  list.resize(lists_size * 3, new_node);
+  std_list.resize(lists_size * 3, new_node);
+  ASSERT_TRUE(list == std_list);
 }
 
 TEST(SwapTest, Swap) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+  size_t lists_size = mersenne() / 5000000;
+  
+  ConsistentList<int8_t> list1;
+  std::list<int8_t> std_list1;
+  for (size_t i = 0; i < lists_size; i++) {
+    int8_t new_node = mersenne();
+    list1.push_back(new_node);
+    std_list1.push_back(new_node);
+  }
+  ASSERT_TRUE(list1 == std_list1);
+
+  lists_size = mersenne() / 500000000;
+
+  ConsistentList<int8_t> list2;
+  std::list<int8_t> std_list2;
+  for (size_t i = 0; i < lists_size; i++) {
+    int8_t new_node = mersenne();
+    list2.push_back(new_node);
+    std_list2.push_back(new_node);
+  }
+  ASSERT_TRUE(list2 == std_list2);
+
+  list1.swap(list2);
+  std_list1.swap(std_list2);
+  ASSERT_TRUE(list1 == std_list1);
+  ASSERT_TRUE(list2 == std_list2);
 }
 
 TEST(MergeTest, Merge1) {
@@ -248,12 +527,75 @@ TEST(MergeTest, MergeEqual) {
 
 }
 
+TEST(MergeTest, MergeUnorderedLists1) {
+  ConsistentList<int32_t> list = {3, 2};
+  ConsistentList<int32_t> other_list(3, 4);
+  ASSERT_THROW(list.merge(other_list), MergeException);
+}
+
+TEST(MergeTest, MergeUnorderedLists2) {
+  ConsistentList<int32_t> list = { 1, 2, 3 };
+  ConsistentList<int32_t> other_list = { 7, 6 };
+  ASSERT_THROW(list.merge(other_list), MergeException);
+}
+
+TEST(ReverseTest, test1) {
+  ConsistentList<int32_t> list1 = { 1, 3 ,5 ,7 };
+  std::list<int32_t> std_list1 = { 1, 3 ,5 ,7 };
+
+  list1.reverse();
+  std_list1.reverse();
+  ASSERT_TRUE(list1 == std_list1);
+}
+
 TEST(ReverseTest, Reverse) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  std::random_device rd;
+  std::mt19937 mersenne(rd());
+  size_t lists_size = 100;// + mersenne() / 500000000;
+
+  ConsistentList<int32_t> list1;
+  std::list<int32_t> std_list1;
+  for (size_t i = 0; i < lists_size; i++) {
+    int32_t new_node = mersenne();
+    list1.push_back(new_node);
+    std_list1.push_back(new_node);
+  }
+  ASSERT_TRUE(list1 == std_list1);
+  
+  //list1.print();
+  list1.reverse();
+  //list1.print();
+  std_list1.reverse();
+  ASSERT_TRUE(list1 == std_list1);
+
+  //ConsistentList<int32_t> list2(list1);
+  //std::list<int32_t> std_list2(std_list1);
+  //ASSERT_TRUE(list2 == std_list2);
 }
 
 TEST(ConsistencyTest, Test1) {
-  ConsistentList<double_t> list;
-  std::list<double_t> std_list;
+  ConsistentList<int32_t> list = { 1,2,3,4,5 };
+  Iterator<int32_t> it1(list.begin());
+  Iterator<int32_t> it3_1(it1.next().next());
+  auto it3_2 = it3_1;
+  list.erase(it3_1);
+  auto it3_3 = it3_1;
+
+  ASSERT_TRUE(*it3_1 == *it3_2);
+  ASSERT_TRUE(*it3_1 == *it3_3);
+  ASSERT_TRUE(*it3_2 == *it3_3);
+  ASSERT_TRUE(*it3_1 == 3);
+  
+  it3_1++;
+  ASSERT_TRUE(*it3_1 == 4);
+  it3_1--;
+  ASSERT_TRUE(*it3_1 == 2);
+
+  list.erase(list.begin().next());
+
+  it3_2--;
+  ASSERT_TRUE(*it3_2 == 2);
+  it3_2++;
+  ASSERT_TRUE(*it3_2 == 4);
+  
 }

@@ -24,3 +24,14 @@ public:
 private:
   std::string message;
 };
+
+class EraseException : std::exception {
+public:
+  explicit EraseException(std::string mes) : message(std::move(mes)) {};
+  const char* what() const throw() override {
+    return message.c_str();
+  }
+
+private:
+  std::string message;
+};

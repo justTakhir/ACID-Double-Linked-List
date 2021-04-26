@@ -20,7 +20,6 @@ public:
 
   ~ConstIterator() {
     this->ptr->subRefCount();
-    this->ptr->checkEndRefCount();
   }
 
   ConstIterator& operator=(const ConstIterator& other) {
@@ -32,49 +31,45 @@ public:
 
   ConstIterator& operator++() {//pre
     //do smth
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getPrev()->subRefCount();
-    this->ptr->getPrev()->checkEndRefCount();
+    //this->ptr->getPrev()->subRefCount();
 
     return *this;
   }
 
-  ConstIterator& operator++(int) {//post
+  ConstIterator operator++(int) {//post
+    ConstIterator tmp = *this;
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getPrev()->subRefCount();
-    this->ptr->getPrev()->checkEndRefCount();
-
-    return *this;
+    return tmp;
     //do smth
   }
   // operator--
   ConstIterator& operator--() {//pre
     //do smth
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
-
-    this->ptr->getNext()->subRefCount();
-    this->ptr->getNext()->checkEndRefCount();
 
     return *this;
   }
 
-  ConstIterator& operator--(int) {//post
+  ConstIterator operator--(int) {//post
+    ConstIterator tmp = *this;
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
-    this->ptr->getNext()->subRefCount();
-    this->ptr->getNext()->checkEndRefCount();
-
-    return *this;
+    return tmp;
     //do smth
   }
   // operator*
-  T& operator* () const {
+  const T& operator* () const {
     if (this->ptr->checkSentinel()) {
       throw IteratorDereferencingException("Try to dereferencing end iterator.");
     }
@@ -86,7 +81,7 @@ public:
   }
 
   // operator->
-  T* operator ->() const {
+  const T* operator ->() const {
     return &this->ptr->getValue();
   }
 
@@ -107,7 +102,7 @@ public:
   }
 
 private:
-  ConstIterator(Node<T>* ptr_) : ptr(ptr_) {
+  ConstIterator(const Node<T>* ptr_) : ptr(const_cast<Node<T>*>(ptr_)) {
     this->ptr->addRefCount();
   }
   Node<T>* ptr;

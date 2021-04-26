@@ -27,11 +27,15 @@ public:
     return this->value_;
   }
 
+  const_reference getValue() const {
+    return this->value_;
+  }
+
   void setValue(const_reference new_value) {
     this->value_ = new_value;
   }
 
-  bool checkSentinel() override {
+  bool checkSentinel() const override {
     return false;
   }
 };

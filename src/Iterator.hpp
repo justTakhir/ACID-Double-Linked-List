@@ -14,7 +14,6 @@ public:
 
   ~Iterator() noexcept {
     this->ptr->subRefCount();
-    this->ptr->checkEndRefCount();
   }
 
   Iterator& operator=(const Iterator& other) {
@@ -26,45 +25,39 @@ public:
 
   Iterator& operator++() {//pre
     //do smth
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
-
-    this->ptr->getPrev()->subRefCount();
-    this->ptr->getPrev()->checkEndRefCount();
 
     return *this;
   }
 
-  Iterator& operator++(int) {//post
+  Iterator operator++(int) {//postfix
+    auto tmp = *this;
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getPrev()->subRefCount();
-    this->ptr->getPrev()->checkEndRefCount();
-
-    return *this;
+    return tmp;
     //do smth
   }
   // operator--
   Iterator& operator--() {//pre
     //do smth
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
-
-    this->ptr->getNext()->subRefCount();
-    this->ptr->getNext()->checkEndRefCount();
 
     return *this;
   }
 
-  Iterator& operator--(int) {//post
+  Iterator operator--(int) {//post
+    auto tmp = *this;
+    this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
-    this->ptr->getNext()->subRefCount();
-    this->ptr->getNext()->checkEndRefCount();
-
-    return *this;
+    return tmp;
     //do smth
   }
 

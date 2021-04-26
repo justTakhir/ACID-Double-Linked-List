@@ -29,23 +29,38 @@ public:
 
   void setRefCount(const size_type& new_ref_count) {
     this->ref_count_ = new_ref_count;
+    //std::cout << this << " = " << this->ref_count_ << std::endl;
+    this->checkEndRefCount();
   }
 
   void addRefCount() {
     this->ref_count_++;
+    //std::cout << this << " + " << this->ref_count_ << std::endl;
   }
 
   void subRefCount() {
     this->ref_count_--;
+    //std::cout << this << " - " << this->ref_count_ << std::endl;
+    this->checkEndRefCount();
   }
 
   void checkEndRefCount() {
-    if (this->ref_count_ == 0) {
+    if (this->getRefCount() == 0) {
+      if (!this->getPrev()->checkSentinel()) {
+        this->getPrev()->subRefCount();
+      }
+      if (!this->getNext()->checkSentinel()){
+        this->getNext()->subRefCount();
+      }
       delete this;
     }
   }
 
-  node* getPrev() const {
+  node_pointer getPrev() {
+    return this->prev_;
+  }
+
+  const node_pointer getPrev() const {
     return this->prev_;
   }
 
@@ -53,7 +68,11 @@ public:
     this->prev_ = new_prev;
   }
 
-  node* getNext() const {
+  node_pointer getNext()  {
+    return this->next_;
+  }
+
+  const node_pointer getNext() const {
     return this->next_;
   }
 
@@ -61,7 +80,12 @@ public:
     this->next_ = new_next;
   }
 
-  virtual bool checkSentinel() = 0;
+  virtual bool checkSentinel() const = 0;
+
+  //~Node() {
+  //  this->prev_ = nullptr;
+  //  this->next_ = nullptr;
+  //}
 
 protected:
   Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)

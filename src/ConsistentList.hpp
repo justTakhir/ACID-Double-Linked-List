@@ -183,7 +183,11 @@ public:
   void pop_front() {
     this->erase(this->begin());
   }
-
+  
+  /// <summary>
+  /// Insert x to the end of list.
+  /// </summary>
+  /// <param name="x"> - element for insert</param>
   void push_back(const T& x) {
     this->insert(this->end(), x);
   }
@@ -235,11 +239,20 @@ public:
   }
 
   iterator erase(const_iterator position) {
+    if (position == this->end()) {
+      throw EraseException("Can't erase end()");
+    }
     const_iterator new_position = position.next();
     this->delete_node(position.ptr);
     return { new_position.ptr };
   }
-  iterator erase(const_iterator position, const_iterator last);
+  iterator erase(const_iterator position, const_iterator last) {
+    iterator new_position(position.ptr);
+    for (; position != last; position++) {
+      new_position = this->erase(position);
+    }
+    return new_position;
+  }
 
   void swap(ConsistentList& other_list) {
     this->swap_nodes(&this->sentinel, &other_list.sentinel);
@@ -254,7 +267,7 @@ public:
 
   void remove(const T& value) {
     node_type* removed_node = this->search_node(value);
-    while (removed_node != nullptr) {
+    while (!removed_node->checkSentinel()) {
       node_type* next_node = removed_node->getNext();
       this->delete_node(removed_node);
       removed_node = this->search_node(next_node, value);
@@ -265,6 +278,11 @@ public:
     if (!std::is_sorted(this->begin(), this->end())) {
       throw MergeException("List's must be ordered!!!");
     }
+
+    if (!std::is_sorted(x.begin(), x.end())) {
+      throw MergeException("List's must be ordered!!!");
+    }
+
     if (*this->begin() >= *x.end().prev()) {
       for (auto it = x.begin(); it != x.end(); it++) {
         this->push_front(*it);
@@ -272,6 +290,7 @@ public:
       x.clear();
       return;
     }
+
     if (*this->end().prev() <= *x.begin()) {
       for (auto it = x.begin(); it != x.end(); it++) {
         this->push_back(*it);
@@ -279,33 +298,16 @@ public:
       x.clear();
       return;
     }
-    /*size_type diff_size = std::max(this->size(), x.size()) - std::min(this->size(), x.size());
-
-    if (*this->begin() > *x.end().prev()) {
-      for (size_type i = 0; i < diff_size; i++) {
-        iterator merged_node(x.end().prev().ptr);
-        this->push_front(*merged_node);
-        merged_node--;
-        x.pop_back();
-      }
-    }
-
-    if(*this->end().prev() < *x.begin()) {
-      for (size_type i = 0; i < diff_size; i++) {
-        this->push_back(*x.begin());
-        x.pop_front();
-      }
-    }*/
+ 
   }
   // void merge(list&& x);
 
   void reverse() noexcept {
-    iterator it1 = this->begin(), it2 = this->end().prev();
-    for (size_type i = 0; i < this->size() / 2; i++) {
-      ConsistentList::swap_nodes(it1.ptr, it2.ptr);
-      it1 = it1 + 1;
-      it2 = it2 - 1;
+    ConsistentList<T> tmp;
+    for (auto it = this->begin(); it != this->end(); it++) {
+      tmp.push_front(*it);
     }
+    *this = tmp;
   }
 
 private:
@@ -313,17 +315,29 @@ private:
   size_type list_size = size_type();
 
   static void swap_nodes(node_type* node1, node_type* node2) { // todo
-    node_type* buf_ptr = node1;
-    node1 = node2;
-    node2 = buf_ptr;
 
-    buf_ptr = node1->getNext();
-    node1->setNext(node1->getPrev());
-    node1->setPrev(buf_ptr);
+    auto tmp = node1->getNext() != node2 ? node1->getNext() : node1;
+    node1->setNext(node2->getNext());
+    node2->setNext(tmp);
+    //if swap closer node2->setNext(node1);
+    tmp = node1->getPrev() != node2 ? node1->getPrev() : node1;
+    node1->setPrev(node2->getPrev());
+    node2->setPrev(tmp);
 
-    buf_ptr = node2->getNext();
-    node2->setNext(node2->getPrev());
-    node2->setPrev(buf_ptr);
+    node1->getNext()->setPrev(node1);
+    if (node1->getPrev() != node2) {
+      node1->getPrev()->setNext(node1);
+  }
+    if (node1->getPrev() != node2){
+      node2->getNext()->setPrev(node2);
+    }
+    node2->getPrev()->setNext(node2);
+
+    /*(*node1)->setNext((*node1)->getNext());
+    (*node1)->setPrev((*node1)->getPrev());
+
+    (*node2)->setNext((*buf_ptr)->getNext());
+    (*node2)->setPrev((*buf_ptr)->getPrev());*/
   }
 
   node_type* search_node(const_reference value) {
@@ -331,21 +345,9 @@ private:
   }
 
   node_type* search_node(node_type* start_node, const_reference value) {
-    //TrueNode<T>* searched_node = start_node;
-    //while (!searched_node->checkSentinel() && searched_node->getValue() != value) {
-    //  searched_node = searched_node->getNext();
-    //}
-
     const_iterator it(start_node);
     while (it != this->end() && *it != value) {
       it++;
-    }
-
-    //if (searched_node->checkSentinel()) {
-    //  return nullptr;
-    //}
-    if (it == this->end()) {
-      return nullptr;
     }
 
     return it.ptr;
@@ -355,13 +357,15 @@ private:
     deleted_node->getPrev()->setNext(deleted_node->getNext());
     deleted_node->getNext()->setPrev(deleted_node->getPrev());
 
-    deleted_node->setRefCount(deleted_node->getRefCount() - 2);
-    if (!deleted_node->getPrev()->checkSentinel() && !deleted_node->getNext()->checkSentinel()) {
-      deleted_node->getNext()->addRefCount();
+    if (!deleted_node->getPrev()->checkSentinel()) {
       deleted_node->getPrev()->addRefCount();
     }
 
-    deleted_node->checkEndRefCount();
+    if (!deleted_node->getNext()->checkSentinel()) {
+      deleted_node->getNext()->addRefCount();
+    }
+
+    deleted_node->setRefCount(deleted_node->getRefCount() - 2);
 
     this->list_size--;
   }
