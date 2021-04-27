@@ -5,12 +5,10 @@
 
 #include <ConsistentList.hpp>
 
-//no test for begin(), end()
-
 static int my_rand(int min = 1, int max = 33676) {
   static std::random_device rd;
   static std::mt19937 mersenne(rd());
-  //std::uniform_int_distribution<> distrib(min, max);
+
   return min + mersenne() % (max - min);
 }
 
@@ -557,4 +555,84 @@ TEST(ConsistencyTest, Test1) {
   ASSERT_TRUE(*it3_2 == 2);
   it3_2++;
   ASSERT_TRUE(*it3_2 == 4);
+}
+ 
+
+TEST(ConsistencyTest, Test2) {
+  ConsistentList<int32_t> list = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+  Iterator<int32_t> it1(list.begin());
+  Iterator<int32_t> it3(it1.next().next());
+  Iterator<int32_t> it4 = it3.next();
+  Iterator<int32_t> it5 = it4.next();
+  Iterator<int32_t> it6 = it5.next();
+  Iterator<int32_t> it7 = it6.next();
+  Iterator<int32_t> it_end = list.end();
+  Iterator<int32_t> it9 = it_end.prev();
+
+  std::vector<Iterator<int32_t>> iterators = {it1, it3, it4, it5, it6, it7, it9};
+
+  std::vector<Iterator<int32_t>> iterators_to_erased;
+
+  iterators_to_erased.push_back(list.erase(it1));
+  ASSERT_TRUE(*it1 == 1);
+  iterators_to_erased.push_back(list.erase(it3));
+  ASSERT_TRUE(*it3 == 3);
+  iterators_to_erased.push_back(list.erase(it5));
+  ASSERT_TRUE(*it5 == 5);
+  iterators_to_erased.push_back(list.erase(it4));
+  ASSERT_TRUE(*it4 == 4);
+  iterators_to_erased.push_back(list.erase(it7));
+  ASSERT_TRUE(*it7 == 7);
+  iterators_to_erased.push_back(list.erase(it6));
+  ASSERT_TRUE(*it6 == 6);
+
+  for (size_t i = 0; i < iterators.size(); i++) {
+    while (iterators[i] != list.end()) {
+      iterators[i]++;
+    }
+  }
+
+  for (auto i = 0; i < iterators.size(); i++) {
+    ASSERT_TRUE(iterators[i] == list.end());
+  }
+
+  std::list<int32_t> list_for_compare = { 2, 8, 9 };
+  ASSERT_TRUE(list == list_for_compare);
+
+  for (size_t i = 0; i < iterators_to_erased.size(); i++) {
+    while (iterators_to_erased[i] != list.end()) {
+      iterators_to_erased[i]++;
+    }
+  }
+
+  for (auto i = 0; i < iterators_to_erased.size(); i++) {
+    ASSERT_TRUE(iterators_to_erased[i] == list.end());
+  }
+
+  ///////////////////////
+  for (size_t i = 0; i < iterators.size(); i++) {
+    iterators[i]--;
+    while (iterators[i] != list.end()) {
+      iterators[i]--;
+    }
+    iterators[i]++;
+  }
+
+  for (auto i = 0; i < iterators.size(); i++) {
+    ASSERT_TRUE(iterators[i] == list.begin());
+    ASSERT_TRUE(*iterators[i] == 2);
+  }
+
+  for (size_t i = 0; i < iterators_to_erased.size(); i++) {
+    iterators_to_erased[i]--;
+    while (iterators_to_erased[i] != list.end()) {
+      iterators_to_erased[i]--;
+    }
+    iterators_to_erased[i]++;
+  }
+
+  for (auto i = 0; i < iterators_to_erased.size(); i++) {
+    ASSERT_TRUE(iterators_to_erased[i] == list.begin());
+    ASSERT_TRUE(*iterators_to_erased[i] == 2);
+  }
 }

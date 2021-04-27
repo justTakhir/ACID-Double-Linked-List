@@ -259,7 +259,7 @@ public:
   }
 
   void clear() noexcept {
-    while(!this->empty()){
+    while(!this->empty()) {
       this->pop_front();
     }
   }
