@@ -11,8 +11,8 @@ protected:
   using difference_type = std::ptrdiff_t;
 
 private:
-  node_pointer prev_;// this is first if = null
-  node_pointer next_;// this is last if = null
+  node_pointer prev_;
+  node_pointer next_;
   size_type ref_count_;
 
 public:
@@ -29,18 +29,15 @@ public:
 
   void setRefCount(const size_type& new_ref_count) {
     this->ref_count_ = new_ref_count;
-    //std::cout << this << " = " << this->ref_count_ << std::endl;
     this->checkEndRefCount();
   }
 
   void addRefCount() {
     this->ref_count_++;
-    //std::cout << this << " + " << this->ref_count_ << std::endl;
   }
 
   void subRefCount() {
     this->ref_count_--;
-    //std::cout << this << " - " << this->ref_count_ << std::endl;
     this->checkEndRefCount();
   }
 
@@ -81,11 +78,6 @@ public:
   }
 
   virtual bool checkSentinel() const = 0;
-
-  //~Node() {
-  //  this->prev_ = nullptr;
-  //  this->next_ = nullptr;
-  //}
 
 protected:
   Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)

@@ -161,7 +161,6 @@ public:
     this->list_size = sz;
   }
 
-  //++++//
   reference front() {
     return *this->begin();
   }
@@ -255,8 +254,8 @@ public:
   }
 
   void swap(ConsistentList& other_list) {
-    this->swap_nodes(&this->sentinel, &other_list.sentinel);
-    std::swap(this->list_size, other_list.list_size);
+    //this->swap_nodes(&this->sentinel, &other_list.sentinel);
+    //std::swap(this->list_size, other_list.list_size);
   }
 
   void clear() noexcept {

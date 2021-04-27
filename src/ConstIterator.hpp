@@ -30,12 +30,9 @@ public:
   }
 
   ConstIterator& operator++() {//pre
-    //do smth
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
-
-    //this->ptr->getPrev()->subRefCount();
 
     return *this;
   }
@@ -47,11 +44,9 @@ public:
     this->ptr->addRefCount();
 
     return tmp;
-    //do smth
   }
-  // operator--
+
   ConstIterator& operator--() {//pre
-    //do smth
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
@@ -66,9 +61,8 @@ public:
     this->ptr->addRefCount();
 
     return tmp;
-    //do smth
   }
-  // operator*
+
   const T& operator* () const {
     if (this->ptr->checkSentinel()) {
       throw IteratorDereferencingException("Try to dereferencing end iterator.");
@@ -80,7 +74,6 @@ public:
     return ptr->getValue();
   }
 
-  // operator->
   const T* operator ->() const {
     return &this->ptr->getValue();
   }

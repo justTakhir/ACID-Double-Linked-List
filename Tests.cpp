@@ -373,10 +373,7 @@ TEST(SizeTest, Size) {
 }
 
 TEST(SizeTest, Empty) {
-  std::random_device rd;
-  std::mt19937 mersenne(rd());
-  std::uniform_int_distribution<> distrib(1, 6);
-  size_t lists_size = 1 + mersenne() / 50000000;
+  size_t lists_size = my_rand();
   ConsistentList<int16_t> list(lists_size);
   std::list<int16_t> std_list(lists_size);
 
@@ -451,37 +448,6 @@ TEST(ResizeTest, ResizeWithValue) {
   ASSERT_TRUE(list == std_list);
 }
 
-TEST(SwapTest, Swap) {
-  std::random_device rd;
-  std::mt19937 mersenne(rd());
-  size_t lists_size = mersenne() / 5000000;
-  
-  ConsistentList<int8_t> list1;
-  std::list<int8_t> std_list1;
-  for (size_t i = 0; i < lists_size; i++) {
-    int8_t new_node = mersenne();
-    list1.push_back(new_node);
-    std_list1.push_back(new_node);
-  }
-  ASSERT_TRUE(list1 == std_list1);
-
-  lists_size = mersenne() / 500000000;
-
-  ConsistentList<int8_t> list2;
-  std::list<int8_t> std_list2;
-  for (size_t i = 0; i < lists_size; i++) {
-    int8_t new_node = mersenne();
-    list2.push_back(new_node);
-    std_list2.push_back(new_node);
-  }
-  ASSERT_TRUE(list2 == std_list2);
-
-  list1.swap(list2);
-  std_list1.swap(std_list2);
-  ASSERT_TRUE(list1 == std_list1);
-  ASSERT_TRUE(list2 == std_list2);
-}
-
 TEST(MergeTest, Merge1) {
   ConsistentList<int8_t> list1(5, 3);
   std::list<int8_t> std_list1(5, 3);
@@ -551,7 +517,7 @@ TEST(ReverseTest, test1) {
 TEST(ReverseTest, Reverse) {
   std::random_device rd;
   std::mt19937 mersenne(rd());
-  size_t lists_size = 100;// + mersenne() / 500000000;
+  size_t lists_size = 100;
 
   ConsistentList<int32_t> list1;
   std::list<int32_t> std_list1;
@@ -562,15 +528,9 @@ TEST(ReverseTest, Reverse) {
   }
   ASSERT_TRUE(list1 == std_list1);
   
-  //list1.print();
   list1.reverse();
-  //list1.print();
   std_list1.reverse();
   ASSERT_TRUE(list1 == std_list1);
-
-  //ConsistentList<int32_t> list2(list1);
-  //std::list<int32_t> std_list2(std_list1);
-  //ASSERT_TRUE(list2 == std_list2);
 }
 
 TEST(ConsistencyTest, Test1) {
@@ -597,5 +557,4 @@ TEST(ConsistencyTest, Test1) {
   ASSERT_TRUE(*it3_2 == 2);
   it3_2++;
   ASSERT_TRUE(*it3_2 == 4);
-  
 }

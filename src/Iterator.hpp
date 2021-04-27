@@ -24,7 +24,6 @@ public:
   }
 
   Iterator& operator++() {//pre
-    //do smth
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
@@ -39,11 +38,9 @@ public:
     this->ptr->addRefCount();
 
     return tmp;
-    //do smth
   }
-  // operator--
+
   Iterator& operator--() {//pre
-    //do smth
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
@@ -58,7 +55,6 @@ public:
     this->ptr->addRefCount();
 
     return tmp;
-    //do smth
   }
 
   T& operator* () const {
