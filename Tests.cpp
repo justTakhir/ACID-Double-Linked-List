@@ -555,6 +555,11 @@ TEST(ConsistencyTest, Test1) {
   ASSERT_TRUE(*it3_2 == 2);
   it3_2++;
   ASSERT_TRUE(*it3_2 == 4);
+
+  list.clear();
+  //it3_3++;
+  it3_2--;
+  ASSERT_TRUE(it3_2 == list.end());
 }
  
 
