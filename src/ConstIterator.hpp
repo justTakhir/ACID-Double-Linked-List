@@ -30,6 +30,9 @@ public:
   }
 
   ConstIterator& operator++() {//pre
+
+    std::unique_lock lock(this->ptr->getMutex());
+
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
@@ -38,6 +41,9 @@ public:
   }
 
   ConstIterator operator++(int) {//post
+
+    std::unique_lock lock(this->ptr->getMutex());
+
     ConstIterator tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
@@ -46,7 +52,22 @@ public:
     return tmp;
   }
 
+  ConstIterator& operator+(size_t step) {
+
+    //std::unique_lock lock(this->ptr->getMutex());
+
+    ConstIterator new_value(this->ptr);
+    for (size_t i = 0; i < step; i++) {
+      new_value++;
+    }
+    *this = new_value;
+    return *this;
+  }
+
   ConstIterator& operator--() {//pre
+    
+    std::unique_lock lock(this->ptr->getMutex());
+
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
@@ -55,12 +76,27 @@ public:
   }
 
   ConstIterator operator--(int) {//post
+
+    std::unique_lock lock(this->ptr->getMutex());
+
     ConstIterator tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
     return tmp;
+  }
+
+  ConstIterator& operator-(size_t step) {
+
+    //std::unique_lock lock(this->ptr->getMutex());
+
+    ConstIterator new_value(this->ptr);
+    for (size_t i = 0; i < step; i++) {
+      new_value--;
+    }
+    *this = new_value;
+    return *this;
   }
 
   const T& operator* () const {
@@ -71,10 +107,14 @@ public:
     if (ptr == nullptr) {
       std::abort();
     }
+
+    std::shared_lock lock(this->ptr->getMutex());
     return ptr->getValue();
   }
 
   const T* operator ->() const {
+
+    std::shared_lock lock(this->ptr->getMutex());
     return &this->ptr->getValue();
   }
 

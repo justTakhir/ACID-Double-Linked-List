@@ -197,6 +197,9 @@ public:
   }
 
   iterator insert(const_iterator position, const T& x) {
+
+    std::unique_lock lock(position.ptr->getMutex());
+    
     iterator pos(position.ptr);
 
     node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
@@ -241,11 +244,18 @@ public:
     if (position == this->end()) {
       throw EraseException("Can't erase end()");
     }
+
+    std::unique_lock lock(position.ptr->getMutex());
+
     const_iterator new_position = position.next();
     this->delete_node(position.ptr);
     return { new_position.ptr };
   }
+
   iterator erase(const_iterator position, const_iterator last) {
+
+    //не нужно, потому что вызывается ирэйс для одной ноды, в котором она блочится std::unique_lock lock(position.ptr->getMutex());
+
     iterator new_position(position.ptr);
     for (; position != last; position++) {
       new_position = this->erase(position);
@@ -273,7 +283,12 @@ public:
     }
   }
 
-  void merge(ConsistentList& x) {
+  std::pair<const_iterator, const_iterator> merge(ConsistentList& x) {
+
+    iterator x_begin = x.begin();
+    iterator x_end = x.end();
+    std::pair<const_iterator, const_iterator> x_iterators(x_begin, x_end);
+
     if (!std::is_sorted(this->begin(), this->end())) {
       throw MergeException("List's must be ordered!!!");
     }
@@ -287,17 +302,36 @@ public:
         this->push_front(*it);
       }
       x.clear();
-      return;
+      return x_iterators;
     }
-
-    if (*this->end().prev() <= *x.begin()) {
+    else if (*this->end().prev() <= *x.begin()) {
       for (auto it = x.begin(); it != x.end(); it++) {
         this->push_back(*it);
       }
       x.clear();
-      return;
+      return x_iterators;
     }
- 
+    else {
+      auto it1 = this->begin();
+      auto it2 = x.begin();
+      while (it1 != this->end()) {
+        if (*it2 < *it1) {
+          this->insert(it1, *it2);
+          it2 = x.erase(it2);
+        }
+        else {
+          it1++;
+        }
+      }
+      if (!x.empty()) {
+        while (!x.empty()) {
+          this->push_back(*it2);
+          it2 = x.erase(it2);
+        }
+      }
+      return x_iterators;
+    }
+    
   }
   // void merge(list&& x);
 

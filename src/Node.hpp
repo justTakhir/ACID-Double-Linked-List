@@ -1,4 +1,5 @@
 #pragma once
+#include <shared_mutex>
 
 template<typename T>
 class Node {
@@ -14,6 +15,7 @@ private:
   node_pointer prev_;
   node_pointer next_;
   size_type ref_count_;
+  mutable std::shared_mutex mutex_;
 
 public:
   node_reference operator =(node_const_reference other_node) {
@@ -21,6 +23,10 @@ public:
     this->prev_ = other_node.prev_;
     this->next_ = other_node.next_;
     return *this;
+  }
+
+  std::shared_mutex& getMutex() {
+    return this->mutex_;
   }
 
   size_type getRefCount() const {

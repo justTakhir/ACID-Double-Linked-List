@@ -92,6 +92,20 @@ TEST(IteratorTest, IteratorPostfixIncriment2) {
   ASSERT_TRUE(it1 == list.begin());
   ASSERT_TRUE(*it == 3);
 }
+
+TEST(IteratorTest, IteratorAddOperator) {
+  ConsistentList list = { 1, 12, 3, 2, 43 };
+  auto it = list.begin();
+  it = it + 3;
+  ASSERT_TRUE(*it == 2);
+}
+
+TEST(IteratorTest, IteratorSubOperator) {
+  ConsistentList list = { 1, 12, 3, 2, 43 };
+  auto it = list.end();
+  it = it - 3;
+  ASSERT_TRUE(*it == 3);
+}
 /////////////////////////////////////////////////////////
 TEST(ConstIteratorTest, ConstIteratorDereferencing) {
   ConsistentList<int32_t> list = { 2, 4, 6 };
@@ -172,6 +186,20 @@ TEST(ConstIteratorTest, ConstIteratorPostfixIncriment2) {
   auto it1 = it++;
   ASSERT_TRUE(it1 == list.begin());
   ASSERT_TRUE(*it == 4);
+}
+
+TEST(ConstIteratorTest, ConstIteratorAddOperator) {
+  ConsistentList list = { 1, 12, 3, 2, 43 };
+  ConstIterator<int32_t> it = list.begin();
+  it = it + 3;
+  ASSERT_TRUE(*it == 2);
+}
+
+TEST(ConstIteratorTest, ConstIteratorSubOperator) {
+  ConsistentList list = { 1, 12, 3, 2, 43 };
+  ConstIterator<int32_t> it = list.end();
+  it = it - 3;
+  ASSERT_TRUE(*it == 3);
 }
 /////////////////////////////////////////////
 
@@ -490,6 +518,48 @@ TEST(MergeTest, MergeEqual) {
   ASSERT_TRUE(list1 == std_list1);
 
 }
+
+TEST(MergeTest, MergeEqual2) {
+  std::list<int32_t> std_list1 = { 1, 3, 5, 7 };
+  std::list<int32_t> std_list2 = { 1, 3, 5, 7 };
+  //std::list<int32_t> std_list1 = { 7, 5, 3, 1 }; пруф, что только в порядке возрастания
+  //std::list<int32_t> std_list2 = { 8, 6, 4, 2 };
+
+  ConsistentList<int32_t> list1 = { 1, 3, 5, 7 };
+  ConsistentList<int32_t> list2 = { 1, 3, 5, 7 };
+
+  std_list1.merge(std_list2);
+
+  auto list2_friend = list1.merge(list2);//чтобы не терять начало и конец кека можно возвращать пару итераторов и куда-нибудь сохранять по желанию
+  auto list2_begin = list2_friend.first;
+  auto list2_end = list2_friend.second;
+
+  ASSERT_TRUE(list1 == std_list1);
+  ASSERT_TRUE(list2_end == list2.end());
+  ASSERT_TRUE(*list2_begin == 1);
+
+}
+
+TEST(MergeTest, SavingBeginEndSecondList) {
+  std::list<int32_t> std_list1 = { 1, 3, 5, 7 };
+  std::list<int32_t> std_list2 = { 2, 4, 6, 8 };
+
+  ConsistentList<int32_t> list1 = { 1, 3, 5, 7 };
+  ConsistentList<int32_t> list2 = { 2, 4, 6, 8 };
+
+  std_list1.merge(std_list2);
+
+  auto list2_friend = list1.merge(list2);
+  auto list2_begin = list2_friend.first;
+  auto list2_end = list2_friend.second;
+
+  ASSERT_TRUE(list1 == std_list1);
+  ASSERT_TRUE(*list1.end().prev() == 8);
+  ASSERT_TRUE(*list1.begin() == 1);
+  ASSERT_TRUE(list2_end == list2.end());
+  ASSERT_TRUE(*list2_begin == 2);
+}
+
 
 TEST(MergeTest, MergeUnorderedLists1) {
   ConsistentList<int32_t> list = {3, 2};
