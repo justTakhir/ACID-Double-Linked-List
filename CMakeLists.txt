@@ -27,7 +27,7 @@ target_sources(consistent-list INTERFACE
 
 enable_testing()
 
-add_executable(consistent-list-tests Tests.cpp IteratorTests.cpp ConstIteratorTests.cpp)
+add_executable(consistent-list-tests Tests.cpp IteratorTests.cpp ConstIteratorTests.cpp MultiThreadTests.cpp)
 target_link_libraries(consistent-list-tests consistent-list gtest_main)
 
 include(GoogleTest)

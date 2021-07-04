@@ -16,7 +16,6 @@ private:
   node_pointer next_;
   size_type ref_count_;
   mutable std::shared_mutex mutex_;
-
 public:
   node_reference operator =(node_const_reference other_node) {
     this->ref_count_ = other_node.ref_count_;
