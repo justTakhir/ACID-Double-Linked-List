@@ -17,6 +17,9 @@ public:
   }
 
   Iterator& operator=(const Iterator& other) {
+
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
+
     this->ptr->subRefCount();
     this->ptr = other.ptr;
     this->ptr->addRefCount();
@@ -25,7 +28,7 @@ public:
 
   Iterator& operator++() {//pre
     
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
       
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
@@ -36,7 +39,7 @@ public:
 
   Iterator operator++(int) {//postfix
     
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     auto tmp = *this;
     this->ptr->subRefCount();
@@ -46,21 +49,39 @@ public:
     return tmp;
   }
 
-  Iterator& operator+(size_t step) {
+  Iterator operator+(size_t step) {
 
-    //std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
-    Iterator new_value(this->ptr);
+    //Iterator new_value(this->ptr);
+    auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
-      new_value++;
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getNext();
+      new_value.ptr->addRefCount();
     }
-    *this = new_value;
-    return *this;
+    //*this = new_value;
+    return new_value;
+  }
+
+  Iterator operator+(int step) {
+
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
+
+    //Iterator new_value(this->ptr);
+    auto new_value = *this;
+    for (size_t i = 0; i < step; i++) {
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getNext();
+      new_value.ptr->addRefCount();
+    }
+    //*this = new_value;
+    return new_value;
   }
 
   Iterator& operator--() {//pre
 
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
@@ -71,7 +92,7 @@ public:
 
   Iterator operator--(int) {//post
 
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     auto tmp = *this;
     this->ptr->subRefCount();
@@ -81,34 +102,55 @@ public:
     return tmp;
   }
 
-  Iterator& operator-(size_t step) {
+  Iterator operator-(size_t step) {
 
-    //std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
-    Iterator new_value(this->ptr);
+    //Iterator new_value(this->ptr);
+    auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
-      new_value--;
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getPrev();
+      new_value.ptr->addRefCount();
     }
-    *this = new_value;
-    return *this;
+    //*this = new_value;
+    return new_value;
+  }
+
+  Iterator operator-(int step) {
+
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
+
+    //Iterator new_value(this->ptr);
+    auto new_value = *this;
+    for (size_t i = 0; i < step; i++) {
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getPrev();
+      new_value.ptr->addRefCount();
+    }
+    //*this = new_value;
+    return new_value;
   }
 
   T& operator* () const {
     if (this->ptr->checkSentinel()) {
       throw IteratorDereferencingException("Try to dereferencing end iterator.");
     }
+    
+    std::shared_lock<std::shared_mutex> lock(this->it_mutex);
+
     TrueNode<T>* ptr = dynamic_cast<TrueNode<T>*>(this->ptr);
     if (ptr == nullptr) {
       std::abort();
     }
 
-    std::shared_lock lock(this->ptr->getMutex());
+    //std::shared_lock lock(this->ptr->getMutex());
     return ptr->getValue();
   }
 
   T* operator ->() const {
 
-    std::shared_lock lock(this - ptr->getMutex());
+    std::shared_lock<std::shared_mutex> lock(this->it_mutex);
     return &this->ptr->getValue();
   }
 
@@ -138,4 +180,5 @@ private:
   }
 
   Node<T>* ptr;
+  mutable std::shared_mutex it_mutex;
 };

@@ -29,3 +29,8 @@ class EraseException : public ConsistentListException {
 public:
   explicit EraseException(std::string mes) : ConsistentListException(mes) {};
 };
+
+class DeleteDeletedException : public ConsistentListException {
+public:
+  explicit DeleteDeletedException(std::string mes) : ConsistentListException(mes) {};
+};

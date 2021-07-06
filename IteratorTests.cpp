@@ -95,7 +95,7 @@ TEST(IteratorTest, IteratorPostfixIncriment2) {
 
 TEST(IteratorTest, IteratorAddOperator) {
   ConsistentList list = { 1, 12, 3, 2, 43 };
-  auto it = list.begin();
+  Iterator<int32_t> it = list.begin();
   it = it + 3;
   ASSERT_TRUE(*it == 2);
 }

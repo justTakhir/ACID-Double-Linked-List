@@ -23,6 +23,9 @@ public:
   }
 
   ConstIterator& operator=(const ConstIterator& other) {
+
+    std::unique_lock lock(this->it_mutex);
+
     this->ptr->subRefCount();
     this->ptr = other.ptr;
     this->ptr->addRefCount();
@@ -31,7 +34,7 @@ public:
 
   ConstIterator& operator++() {//pre
 
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
@@ -42,7 +45,7 @@ public:
 
   ConstIterator operator++(int) {//post
 
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     ConstIterator tmp = *this;
     this->ptr->subRefCount();
@@ -52,21 +55,39 @@ public:
     return tmp;
   }
 
-  ConstIterator& operator+(size_t step) {
+  ConstIterator operator+(size_t step) {
 
-    //std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
-    ConstIterator new_value(this->ptr);
+    //ConstIterator new_value(this->ptr);
+    auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
-      new_value++;
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getNext();
+      new_value.ptr->addRefCount();
     }
-    *this = new_value;
-    return *this;
+    //*this = new_value;
+    return new_value;
+  }
+
+  ConstIterator operator+(int step) {
+
+   std::unique_lock<std::shared_mutex> lock(this->it_mutex);
+
+   //ConstIterator new_value(this->ptr);
+   auto new_value = *this;
+    for (size_t i = 0; i < step; i++) {
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getNext();
+      new_value.ptr->addRefCount();
+    }
+    //*this = new_value;
+    return new_value;
   }
 
   ConstIterator& operator--() {//pre
     
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
@@ -77,7 +98,7 @@ public:
 
   ConstIterator operator--(int) {//post
 
-    std::unique_lock lock(this->ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
 
     ConstIterator tmp = *this;
     this->ptr->subRefCount();
@@ -87,17 +108,59 @@ public:
     return tmp;
   }
 
-  ConstIterator& operator-(size_t step) {
+  //ConstIterator& operator-(size_t step) {
 
-    //std::unique_lock lock(this->ptr->getMutex());
+  //  //std::unique_lock lock(this->ptr->getMutex());
 
-    ConstIterator new_value(this->ptr);
+  //  ConstIterator new_value(this->ptr);
+  //  for (size_t i = 0; i < step; i++) {
+  //    new_value--;
+  //  }
+  //  *this = new_value;
+  //  return *this;
+  //}
+
+  ConstIterator operator-(size_t step) {
+
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
+
+    //Iterator new_value(this->ptr);
+    auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
-      new_value--;
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getPrev();
+      new_value.ptr->addRefCount();
     }
-    *this = new_value;
-    return *this;
+    //*this = new_value;
+    return new_value;
   }
+
+  ConstIterator operator-(int step) {
+
+    std::unique_lock<std::shared_mutex> lock(this->it_mutex);
+
+    //Iterator new_value(this->ptr);
+    auto new_value = *this;
+    for (size_t i = 0; i < step; i++) {
+      new_value.ptr->subRefCount();
+      new_value.ptr = new_value.ptr->getPrev();
+      new_value.ptr->addRefCount();
+    }
+    //*this = new_value;
+    return new_value;
+  }
+
+  //Iterator& operator-(size_t step) {
+
+  //  std::unique_lock lock(this->it_mutex);
+
+  //  Iterator new_value(this->ptr);
+  //  for (size_t i = 0; i < step; i++) {
+  //    new_value--;
+  //  }
+  //  *this = new_value;
+  //  return *this;
+  //}
 
   const T& operator* () const {
     if (this->ptr->checkSentinel()) {
@@ -108,13 +171,13 @@ public:
       std::abort();
     }
 
-    std::shared_lock lock(this->ptr->getMutex());
+    std::shared_lock<std::shared_mutex> lock(this->it_mutex);
     return ptr->getValue();
   }
 
   const T* operator ->() const {
 
-    std::shared_lock lock(this->ptr->getMutex());
+    std::shared_lock<std::shared_mutex> lock(this->it_mutex);
     return &this->ptr->getValue();
   }
 
@@ -139,4 +202,5 @@ private:
     this->ptr->addRefCount();
   }
   Node<T>* ptr;
+  mutable std::shared_mutex it_mutex;
 };

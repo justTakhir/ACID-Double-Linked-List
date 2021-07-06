@@ -81,7 +81,6 @@ public:
   }
 
   bool operator==(const std::list<T>& std_list) {
-    
     if (this->size() != std_list.size()) {
       return false;
     }
@@ -131,10 +130,12 @@ public:
   // const_reverse_iterator crend() const noexcept;
 
   bool empty() const noexcept {
+    std::shared_lock<std::shared_mutex> lock(this->list_mutex);
     return this->size() == 0;
   }
 
   size_type size() const noexcept {
+    std::shared_lock<std::shared_mutex> lock(this->list_mutex);
     return this->list_size;
   }
   //size_type max_size() const noexcept;
@@ -198,8 +199,9 @@ public:
 
   iterator insert(const_iterator position, const T& x) {
 
-    std::unique_lock lock(position.ptr->getMutex());
-    
+    //std::unique_lock<std::shared_mutex> lock(position.ptr->getMutex());
+    std::unique_lock<std::shared_mutex> lock(this->list_mutex);
+
     iterator pos(position.ptr);
 
     node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
@@ -241,14 +243,24 @@ public:
   }
 
   iterator erase(const_iterator position) {
+    std::unique_lock<std::shared_mutex> lock(this->list_mutex);
+    //lock.lock();
+    
+    if (position.ptr->isDeleted()) {
+      //lock.unlock();
+      throw EraseException("Try to delete already deleted node!");
+    }
+
     if (position == this->end()) {
+      //lock.unlock();
       throw EraseException("Can't erase end()");
     }
 
-    std::unique_lock lock(position.ptr->getMutex());
-
+    //std::unique_lock<std::shared_mutex> lock(position.ptr->getMutex());
+    
     const_iterator new_position = position.next();
     this->delete_node(position.ptr);
+    //lock.unlock();
     return { new_position.ptr };
   }
 
@@ -263,15 +275,20 @@ public:
     return new_position;
   }
 
-  void swap(ConsistentList& other_list) {
+  void swap(ConsistentList& other_list) {//TODO: release
     //this->swap_nodes(&this->sentinel, &other_list.sentinel);
     //std::swap(this->list_size, other_list.list_size);
   }
 
   void clear() noexcept {
+    //std::unique_lock<std::shared_mutex> lock(this->list_mutex);
+    //lock.lock();
+
     while(!this->empty()) {
       this->pop_front();
     }
+
+
   }
 
   void remove(const T& value) {
@@ -284,6 +301,11 @@ public:
   }
 
   std::pair<const_iterator, const_iterator> merge(ConsistentList& x) {
+    //std::unique_lock<std::shared_mutex> lock_this(this->list_mutex);
+    //std::unique_lock<std::shared_mutex> lock_other(x.list_mutex);
+
+    //lock_this.lock();
+    //lock_other.lock();
 
     iterator x_begin = x.begin();
     iterator x_end = x.end();
@@ -302,6 +324,9 @@ public:
         this->push_front(*it);
       }
       x.clear();
+
+      //lock_this.unlock();
+      //lock_other.unlock();
       return x_iterators;
     }
     else if (*this->end().prev() <= *x.begin()) {
@@ -309,6 +334,9 @@ public:
         this->push_back(*it);
       }
       x.clear();
+
+      //lock_this.unlock();
+      //lock_other.unlock();
       return x_iterators;
     }
     else {
@@ -329,23 +357,34 @@ public:
           it2 = x.erase(it2);
         }
       }
+
+      //lock_this.unlock();
+      //lock_other.unlock();
       return x_iterators;
     }
     
+    
+
   }
   // void merge(list&& x);
 
   void reverse() noexcept {
+    //std::unique_lock<std::shared_mutex> lock(this->list_mutex);
+    //lock.lock();
+
     ConsistentList<T> tmp;
     for (auto it = this->begin(); it != this->end(); it++) {
       tmp.push_front(*it);
     }
     *this = tmp;
+
+    //lock.unlock();
   }
 
 private:
   SentinelNode<T> sentinel;
   size_type list_size = size_type();
+  mutable std::shared_mutex list_mutex;
 
   static void swap_nodes(node_type* node1, node_type* node2) { // todo
 
@@ -387,6 +426,7 @@ private:
   }
 
   void delete_node(node_type* deleted_node) {
+    deleted_node->setDeleted();
     deleted_node->getPrev()->setNext(deleted_node->getNext());
     deleted_node->getNext()->setPrev(deleted_node->getPrev());
 

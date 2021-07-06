@@ -1,5 +1,6 @@
 #pragma once
 #include <shared_mutex>
+#include <atomic>
 
 template<typename T>
 class Node {
@@ -15,18 +16,24 @@ private:
   node_pointer prev_;
   node_pointer next_;
   size_type ref_count_;
-  mutable std::shared_mutex mutex_;
+  bool deleted_;
+  //std::atomic<size_type> ref_count_;
+  //std::atomic<bool> deleted_;
+  //mutable std::shared_mutex mutex_;
 public:
   node_reference operator =(node_const_reference other_node) {
+
+    //std::unique_lock lock(this->ptr->getMutex());
+
     this->ref_count_ = other_node.ref_count_;
     this->prev_ = other_node.prev_;
     this->next_ = other_node.next_;
     return *this;
   }
 
-  std::shared_mutex& getMutex() {
-    return this->mutex_;
-  }
+  //std::shared_mutex& getMutex() {
+  //  return this->mutex_;
+  //}
 
   size_type getRefCount() const {
     return this->ref_count_;
@@ -82,9 +89,17 @@ public:
     this->next_ = new_next;
   }
 
+  bool isDeleted() {
+    return this->deleted_;
+  }
+
+  void setDeleted() {
+    this->deleted_ = true;
+  }
+
   virtual bool checkSentinel() const = 0;
 
 protected:
-  Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr)
-    : ref_count_(ref_count), prev_(prev), next_(next) {}
+  Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr, bool deleted = false)
+    : ref_count_(ref_count), prev_(prev), next_(next), deleted_(deleted) {}
 };
