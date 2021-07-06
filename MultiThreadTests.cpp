@@ -186,11 +186,11 @@ TEST(ThreadSafetyTest, RaceConditionTest) {
 
 TEST(ReadTests, HardDataOnlyReading) {
   ConsistentList<int32_t> list;
-  for (int32_t i = 0; i < 10010000; i++) {
+  for (int32_t i = 0; i < 10010; i++) {
     list.push_back(i);
   }
 
-  Iterator<int32_t> it = list.begin() + 124999;
+  Iterator<int32_t> it = list.begin() + 124;
 
   //int32_t for_init = 0;
   //for (size_t i = 0; i < 8; i++) {
@@ -225,7 +225,7 @@ TEST(ReadTests, HardDataOnlyReading) {
   std::chrono::duration<double> time_of_working_some_thread =
     finish_for_some_thread - start_for_some_thread;
 
-  it = list.begin() + 124999;
+  it = list.begin() + 124;
 
   std::chrono::time_point start_for_single_thread = std::chrono::high_resolution_clock::now();
 
