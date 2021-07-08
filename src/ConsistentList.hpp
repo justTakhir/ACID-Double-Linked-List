@@ -105,13 +105,17 @@ public:
   void assign(std::initializer_list<value_type> init_list);
 
   iterator begin() noexcept {
-    return { this->sentinel.getNext() };
+    iterator begin_it(this->sentinel.getNext());
+    begin_it.setMutex(&this->list_mutex);
+    return begin_it;
   }
   const_iterator begin() const noexcept {
     return this->cbegin();
   }
   iterator end() noexcept {
-    return { &this->sentinel };
+    iterator end_it(&this->sentinel);
+    end_it.setMutex(&this->list_mutex);
+    return end_it;
   }
   const_iterator end() const noexcept {
     return this->cend();
@@ -121,10 +125,14 @@ public:
   // reverse_iterator rend() noexcept;
   // const_reverse_iterator rend() const noexcept;
   const_iterator cbegin() const noexcept {
-    return { this->sentinel.getNext() };
+    const_iterator cbegin_it(this->sentinel.getNext());
+    cbegin_it.setMutex(&this->list_mutex);
+    return cbegin_it;
   }
   const_iterator cend() const noexcept {
-    return { &this->sentinel };
+    const_iterator cend_it(&this->sentinel);
+    cend_it.setMutex(&this->list_mutex);
+    return cend_it;
   }
   // const_reverse_iterator crbegin() const noexcept;
   // const_reverse_iterator crend() const noexcept;
@@ -199,7 +207,6 @@ public:
 
   iterator insert(const_iterator position, const T& x) {
 
-    //std::unique_lock<std::shared_mutex> lock(position.ptr->getMutex());
     std::unique_lock<std::shared_mutex> lock(this->list_mutex);
 
     iterator pos(position.ptr);
@@ -212,11 +219,14 @@ public:
     
     this->list_size++;
 
-    return { inserted_node };
+    iterator it_to_inserted_node(inserted_node);
+    it_to_inserted_node.setMutex(position.it_mutex);
+    return it_to_inserted_node;
   }
 
   iterator insert(const_iterator position, size_type n, const T& x) {
     iterator it_to_inserted_node(position.ptr);
+    it_to_inserted_node.setMutex(position.it_mutex);
     for (size_type i = 0; i < n; i++) {
       it_to_inserted_node = this->insert(it_to_inserted_node, x);
     }
@@ -225,43 +235,41 @@ public:
 
   template<class InputIterator, std::enable_if_t<std::_Is_iterator_v<InputIterator>, int> = 0>
   iterator insert(const_iterator position, InputIterator first, InputIterator last) {
-    /*iterator it_to_inserted_node(position.ptr);
-    for(; first != last; first++){//--?
-      it_to_inserted_node = this->insert(it_to_inserted_node, *first);
-    }
-    return it_to_inserted_node;*/
+
     iterator it_to_inserted_node(position.ptr);
+    it_to_inserted_node.setMutex(position.it_mutex);
     auto it = std::prev(last);
+
     for (; it != first; it--) {//--?
       it_to_inserted_node = this->insert(it_to_inserted_node, *it);
     }
-    return this->insert(it_to_inserted_node, *it);
+    iterator ready_it_to_inserted_node = this->insert(it_to_inserted_node, *it);
+    ready_it_to_inserted_node.setMutex(it_to_inserted_node.it_mutex);
+    return ready_it_to_inserted_node;
   }
 
   iterator insert(const_iterator position, std::initializer_list<T> init_list) {
-    return this->insert(position, init_list.begin(), init_list.end());
+    iterator ready_it_to_inserted_node = this->insert(position, init_list.begin(), init_list.end());
+    ready_it_to_inserted_node.setMutex(position.it_mutex);
+    return ready_it_to_inserted_node;
   }
 
   iterator erase(const_iterator position) {
     std::unique_lock<std::shared_mutex> lock(this->list_mutex);
-    //lock.lock();
     
     if (position.ptr->isDeleted()) {
-      //lock.unlock();
-      throw EraseException("Try to delete already deleted node!");
+      throw DeleteDeletedException("Try to delete already deleted node!");
     }
 
     if (position == this->end()) {
-      //lock.unlock();
       throw EraseException("Can't erase end()");
     }
-
-    //std::unique_lock<std::shared_mutex> lock(position.ptr->getMutex());
     
-    const_iterator new_position = position.next();
+    const_iterator c_new_position = position.next();
     this->delete_node(position.ptr);
-    //lock.unlock();
-    return { new_position.ptr };
+    iterator new_position(c_new_position.ptr);
+    new_position.setMutex(position.it_mutex);
+    return new_position;
   }
 
   iterator erase(const_iterator position, const_iterator last) {
@@ -269,6 +277,7 @@ public:
     //не нужно, потому что вызывается ирэйс для одной ноды, в котором она блочится std::unique_lock lock(position.ptr->getMutex());
 
     iterator new_position(position.ptr);
+    new_position.setMutex(position.it_mutex);
     for (; position != last; position++) {
       new_position = this->erase(position);
     }
@@ -281,9 +290,6 @@ public:
   }
 
   void clear() noexcept {
-    //std::unique_lock<std::shared_mutex> lock(this->list_mutex);
-    //lock.lock();
-
     while(!this->empty()) {
       this->pop_front();
     }
@@ -301,12 +307,6 @@ public:
   }
 
   std::pair<const_iterator, const_iterator> merge(ConsistentList& x) {
-    //std::unique_lock<std::shared_mutex> lock_this(this->list_mutex);
-    //std::unique_lock<std::shared_mutex> lock_other(x.list_mutex);
-
-    //lock_this.lock();
-    //lock_other.lock();
-
     iterator x_begin = x.begin();
     iterator x_end = x.end();
     std::pair<const_iterator, const_iterator> x_iterators(x_begin, x_end);
@@ -324,9 +324,6 @@ public:
         this->push_front(*it);
       }
       x.clear();
-
-      //lock_this.unlock();
-      //lock_other.unlock();
       return x_iterators;
     }
     else if (*this->end().prev() <= *x.begin()) {
@@ -334,9 +331,6 @@ public:
         this->push_back(*it);
       }
       x.clear();
-
-      //lock_this.unlock();
-      //lock_other.unlock();
       return x_iterators;
     }
     else {
@@ -358,8 +352,6 @@ public:
         }
       }
 
-      //lock_this.unlock();
-      //lock_other.unlock();
       return x_iterators;
     }
     
@@ -369,16 +361,11 @@ public:
   // void merge(list&& x);
 
   void reverse() noexcept {
-    //std::unique_lock<std::shared_mutex> lock(this->list_mutex);
-    //lock.lock();
-
     ConsistentList<T> tmp;
     for (auto it = this->begin(); it != this->end(); it++) {
       tmp.push_front(*it);
     }
     *this = tmp;
-
-    //lock.unlock();
   }
 
 private:
@@ -391,7 +378,7 @@ private:
     auto tmp = node1->getNext() != node2 ? node1->getNext() : node1;
     node1->setNext(node2->getNext());
     node2->setNext(tmp);
-    //if swap closer node2->setNext(node1);
+
     tmp = node1->getPrev() != node2 ? node1->getPrev() : node1;
     node1->setPrev(node2->getPrev());
     node2->setPrev(tmp);
@@ -404,12 +391,6 @@ private:
       node2->getNext()->setPrev(node2);
     }
     node2->getPrev()->setNext(node2);
-
-    /*(*node1)->setNext((*node1)->getNext());
-    (*node1)->setPrev((*node1)->getPrev());
-
-    (*node2)->setNext((*buf_ptr)->getNext());
-    (*node2)->setPrev((*buf_ptr)->getPrev());*/
   }
 
   node_type* search_node(const_reference value) {
@@ -418,6 +399,7 @@ private:
 
   node_type* search_node(node_type* start_node, const_reference value) {
     const_iterator it(start_node);
+    it.setMutex(&this->list_mutex);
     while (it != this->end() && *it != value) {
       it++;
     }

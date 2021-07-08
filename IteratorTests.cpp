@@ -94,15 +94,31 @@ TEST(IteratorTest, IteratorPostfixIncriment2) {
 }
 
 TEST(IteratorTest, IteratorAddOperator) {
-  ConsistentList list = { 1, 12, 3, 2, 43 };
+  ConsistentList<int32_t> list = { 1, 12, 3, 2, 43 };
   Iterator<int32_t> it = list.begin();
   it = it + 3;
   ASSERT_TRUE(*it == 2);
 }
 
 TEST(IteratorTest, IteratorSubOperator) {
-  ConsistentList list = { 1, 12, 3, 2, 43 };
-  auto it = list.end();
+  ConsistentList<int32_t> list = { 1, 12, 3, 2, 43 };
+  Iterator<int32_t> it = list.end();
   it = it - 3;
   ASSERT_TRUE(*it == 3);
+}
+
+TEST(IteratorTest, IteratorAddOperatorWithoutEquating) {
+  ConsistentList<int32_t> list = { 1, 12, 3, 2, 43 };
+  Iterator<int32_t> it = list.begin();
+  Iterator<int32_t> it2 = it + 3;
+  ASSERT_TRUE(*it2 == 2);
+  ASSERT_TRUE(*it == 1);
+}
+
+TEST(IteratorTest, IteratorSubOperatorWithoutEquating) {
+  ConsistentList<int32_t> list = { 1, 12, 3, 2, 43 };
+  Iterator<int32_t> it = list.begin();
+  Iterator<int32_t> it2 = it - 3;
+  ASSERT_TRUE(*it2 == 2);
+  ASSERT_TRUE(*it == 1);
 }
