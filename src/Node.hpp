@@ -15,9 +15,9 @@ protected:
 private:
   node_pointer prev_;
   node_pointer next_;
-  size_type ref_count_;
+  //size_type ref_count_;
   bool deleted_;
-  //std::atomic<size_type> ref_count_;
+  std::atomic<size_type> ref_count_;
   //std::atomic<bool> deleted_;
   //mutable std::shared_mutex mutex_;
 public:
