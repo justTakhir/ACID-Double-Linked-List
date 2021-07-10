@@ -225,7 +225,7 @@ TEST(ReadTests, SimpleDataOnlyReading) {
 
 TEST(ReadTests, HardDataOnlyReading) {
   int32_t k = 0;
-  while (k < 10000) {
+  while (k < 10) {
     ConsistentList<int32_t> list;
     for (int32_t i = 0; i < 10010; i++) {
       list.push_back(i);
@@ -380,4 +380,315 @@ TEST(SynchronizationPrimitiveTests, ConditionVariable) {
   ASSERT_TRUE(list == std_list);
   //k++;
 //}
+}
+// не должно быть дубликатов и значения должны принадлежать заданому диапозону
+
+static int my_rand(int min = 1, int max = 33676) {
+  static std::random_device rd;
+  static std::mt19937 mersenne(rd());
+
+  return min + mersenne() % (max - min);
+}
+
+TEST(OnlyInsert, LeftToRight) {
+  ConsistentList<int32_t> list;
+  size_t num_of_threads = 4;
+  for (size_t i = 0; i < num_of_threads * 1000; i++) {
+    list.push_back(i);
+    //std::cout << "Now is " << i << std::endl;
+  }
+
+  auto insert = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+    int32_t counter = 1000000 + *start;
+    auto it = start;
+    //for (auto it1 = start; it1 != end; it1++) {
+    for (; start != end; start = start + 1) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      //std::cout << "Now is " << *start << std::endl;
+      list.insert(start, counter);
+      counter++;
+    }
+    list.insert(start, counter);
+    //std::cout << "Counter for this thread: " << counter << std::endl;
+  };
+  auto begin = list.begin();
+
+  std::thread th1(insert, begin, begin + 999);
+  std::thread th2(insert, begin + 1000, begin + 1999);
+  std::thread th3(insert, begin + 2000, begin + 2999);
+  std::thread th4(insert, begin + 3000, begin + 3999);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+  th1.join();
+  th2.join();
+  th3.join();
+  th4.join();
+
+  size_t count1 = 0, count2 = 0;
+  for (auto it1 = begin; it1 != list.end(); it1++) {
+    count2 = 0;
+    for (auto it2 = begin; it2 != list.end(); it2++) {
+      if (it1 == it2) {
+        count2++;
+        continue;
+      }
+      //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      //if (*it1 == *it2) {
+      //  std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      //}
+      ASSERT_TRUE(*it1 != *it2);
+      count2++;
+    }
+    count1++;
+  }
+  //std::cout << "List size is: " << list.size() << std::endl;
+}
+
+TEST(OnlyInsert, RightToLeft) {
+  ConsistentList<int32_t> list;
+  size_t num_of_threads = 4;
+  for (size_t i = 0; i < num_of_threads * 1000; i++) {
+    list.push_back(i);
+    //std::cout << "Now is " << i << std::endl;
+  }
+
+  auto insert = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+    int32_t counter = 1000000 + *start;
+    auto it = start;
+    //for (auto it1 = start; it1 != end; it1++) {
+    for (; start != end; start = start - 2) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    //  std::cout << "Now is " << *start << std::endl;
+      list.insert(start, counter);
+      counter++;
+    }
+    //std::cout << "Counter for this thread: " << counter << std::endl;
+  };
+  auto begin = list.begin();
+
+  std::thread th1(insert, begin + 3999, begin + 2999);
+  std::thread th2(insert, begin + 2999, begin + 1999);
+  std::thread th3(insert, begin + 1999, begin + 999);
+  std::thread th4(insert, begin + 999, begin - 1);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+
+  th1.join();
+  th2.join();
+  th3.join();
+  th4.join();
+
+  size_t count1 = 0, count2 = 0;
+  for (auto it1 = begin; it1 != list.end(); it1++) {
+    count2 = 0;
+    for (auto it2 = begin; it2 != list.end(); it2++) {
+      if (it1 == it2) {
+        count2++;
+        continue;
+      }
+      //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      //if (*it1 == *it2) {
+        //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      //}
+      ASSERT_TRUE(*it1 != *it2);
+      count2++;
+    }
+    count1++;
+  }
+  std::cout << "List size is: " << list.size() << std::endl;
+}
+
+//TEST(OnlyInsert, BothDirections) {
+//  ConsistentList<int32_t> list;
+//  size_t num_of_threads = 4;
+//  for (size_t i = 0; i < num_of_threads * 1000; i++) {
+//    list.push_back(i);
+//    //std::cout << "Now is " << i << std::endl;
+//  }
+//
+//  auto insert1 = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+//    int32_t counter = 1000000 + *start;
+//    auto it = start;
+//    //for (auto it1 = start; it1 != end; it1++) {
+//    for (; start != end; start = start + 1) {
+//      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//      //std::cout << "Now is " << *start << std::endl;
+//      list.insert(start, counter);
+//      counter++;
+//    }
+//    list.insert(start, counter);
+//    //std::cout << "Counter for this thread: " << counter << std::endl;
+//  };
+//
+//  auto insert2 = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+//    int32_t counter = 1000000 + *start;
+//    auto it = start;
+//    //for (auto it1 = start; it1 != end; it1++) {
+//    for (; start != end; start = start - 2) {
+//      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//      //  std::cout << "Now is " << *start << std::endl;
+//      list.insert(start, counter);
+//      counter++;
+//    }
+//    //std::cout << "Counter for this thread: " << counter << std::endl;
+//  };
+//
+//  auto begin = list.begin();
+//
+//  std::thread th1(insert1, begin, begin + 999);
+//  std::thread th2(insert1, begin + 1000, begin + 1999);
+//  std::thread th3(insert1, begin + 2000, begin + 2999);
+//  std::thread th4(insert1, begin + 3000, begin + 3999);
+//  std::thread th5(insert2, begin + 3999, begin + 2999);
+//  std::thread th6(insert2, begin + 2999, begin + 1999);
+//  std::thread th7(insert2, begin + 1999, begin + 999);
+//  std::thread th8(insert2, begin + 999, begin - 1);
+//
+//  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+//
+//  th1.join();
+//  th2.join();
+//  th3.join();
+//  th4.join();
+//  th5.join();
+//  th6.join();
+//  th7.join();
+//  th8.join();
+//
+//  size_t count1 = 0, count2 = 0;
+//  for (auto it1 = begin; it1 != list.end(); it1++) {
+//    count2 = 0;
+//    for (auto it2 = begin; it2 != list.end(); it2++) {
+//      if (it1 == it2) {
+//        count2++;
+//        continue;
+//      }
+//      //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+//      if (*it1 == *it2) {
+//        std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+//      }
+//      ASSERT_TRUE(*it1 != *it2);
+//      count2++;
+//    }
+//    count1++;
+//  }
+//}
+
+TEST(OnlyErase, LeftToRight) {
+  ConsistentList<int32_t> list;
+  size_t num_of_threads = 4;
+  for (size_t i = 0; i < num_of_threads * 1000; i++) {
+    list.push_back(i);
+    //std::cout << "Now is " << i << std::endl;
+  }
+
+  auto insert = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+    int32_t counter = 1000000 + *start;
+    auto it = start;
+    //for (auto it1 = start; it1 != end; it1++) {
+    for (; start != end; start = start + 1) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::cout << "Now is " << *start << std::endl;
+      if (start == list.end()) {
+        continue;
+      }
+      list.erase(start);
+      counter++;
+    } 
+    list.erase(start);
+    //std::cout << "Counter for this thread: " << counter << std::endl;
+  };
+  auto begin = list.begin();
+
+  std::thread th1(insert, begin, begin + 999);
+  std::thread th2(insert, begin + 1000, begin + 1999);
+  std::thread th3(insert, begin + 2000, begin + 2999);
+  std::thread th4(insert, begin + 3000, begin + 3999);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+  th1.join();
+  th2.join();
+  th3.join();
+  th4.join();
+
+  size_t count1 = 0, count2 = 0;
+  for (auto it1 = begin; it1 != list.end(); it1++) {
+    count2 = 0;
+    for (auto it2 = begin; it2 != list.end(); it2++) {
+      if (it1 == it2) {
+        count2++;
+        continue;
+      }
+      //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      if (*it1 == *it2) {
+        std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      }
+      ASSERT_TRUE(*it1 != *it2);
+      count2++;
+    }
+    count1++;
+  }
+  std::cout << "List size is: " << list.size() << std::endl;
+}
+
+TEST(OnlyErase, RightToLeft) {
+  ConsistentList<int32_t> list;
+  size_t num_of_threads = 4;
+  for (size_t i = 0; i < num_of_threads * 1000; i++) {
+    list.push_back(i);
+    //std::cout << "Now is " << i << std::endl;
+  }
+
+  auto insert = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+    int32_t counter = 1000000 + *start;
+    auto it = start;
+    //for (auto it1 = start; it1 != end; it1++) {
+    for (; start != end; start = start - 1) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::cout << "Now is " << *start << std::endl;
+      if (start == list.end()) {
+        continue;
+      }
+      if (start != list.end()) {
+        list.erase(start);
+      }
+      counter++;
+    }
+    list.erase(start);
+    //std::cout << "Counter for this thread: " << counter << std::endl;
+  };
+  auto begin = list.begin();
+
+  std::thread th1(insert, begin + 3999, begin + 3000);
+  std::thread th2(insert, begin + 2999, begin + 2000);
+  std::thread th3(insert, begin + 1999, begin + 1000);
+  std::thread th4(insert, begin + 999, begin);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+
+  th1.join();
+  th2.join();
+  th3.join();
+  th4.join();
+
+  size_t count1 = 0, count2 = 0;
+  for (auto it1 = begin; it1 != list.end(); it1++) {
+    count2 = 0;
+    for (auto it2 = begin; it2 != list.end(); it2++) {
+      if (it1 == it2) {
+        count2++;
+        continue;
+      }
+      //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      //if (*it1 == *it2) {
+        //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      //}
+      ASSERT_TRUE(*it1 != *it2);
+      count2++;
+    }
+    count1++;
+  }
+  std::cout << "List size is: " << list.size() << std::endl;
 }

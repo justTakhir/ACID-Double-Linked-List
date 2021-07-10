@@ -8,7 +8,7 @@ class Iterator {
   friend class ConsistentList<T>;
 
 public:
-  Iterator(const Iterator<T>& other) : ptr(other.ptr), it_mutex(other.it_mutex) {
+  Iterator(const Iterator<T>& other) : ptr(other.ptr) {
     this->ptr->addRefCount();
   }
 
@@ -18,7 +18,7 @@ public:
 
   Iterator& operator=(const Iterator& other) {
 
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     this->ptr->subRefCount();
     this->ptr = other.ptr;
@@ -28,7 +28,7 @@ public:
 
   Iterator& operator++() {//pre
     
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
       
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
@@ -39,7 +39,7 @@ public:
 
   Iterator operator++(int) {//postfix
     
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     auto tmp = *this;
     this->ptr->subRefCount();
@@ -65,7 +65,7 @@ public:
   template<typename S>
   Iterator operator+(S step) {
 
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     auto new_value = *this;
     for (S i = 0; i < step; i++) {
@@ -78,7 +78,7 @@ public:
 
   Iterator& operator--() {//pre
 
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
@@ -89,7 +89,7 @@ public:
 
   Iterator operator--(int) {//post
 
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     auto tmp = *this;
     this->ptr->subRefCount();
@@ -101,7 +101,7 @@ public:
 
   Iterator operator-(size_t step) {
 
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -114,7 +114,7 @@ public:
 
   Iterator operator-(int step) {
 
-    std::unique_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -131,7 +131,7 @@ public:
       throw IteratorDereferencingException("Try to dereferencing end iterator.");
     }
     
-    std::shared_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::shared_lock<std::shared_mutex> lock(this->ptr->getRWLock());
 
     TrueNode<T>* ptr = dynamic_cast<TrueNode<T>*>(this->ptr);
     if (ptr == nullptr) {
@@ -142,7 +142,7 @@ public:
   }
 
   T* operator ->() const {
-    std::shared_lock<std::shared_mutex> lock(*(this->it_mutex));
+    std::shared_lock<std::shared_mutex> lock(this->ptr->getRWLock());
     return &this->ptr->getValue();
   }
 
@@ -155,26 +155,26 @@ public:
   }
 
   operator ConstIterator<T>() const {
-    ConstIterator<T> obama(this->ptr);
-    obama.setMutex(this->it_mutex);
-    return obama;
+    /*ConstIterator<T> obama(this->ptr);
+    obama.setMutex(this->it_mutex);*/
+    return { this->ptr };
   }
 
   Iterator prev() const {
-    Iterator prev_it(this->ptr->getPrev());
-    prev_it.setMutex(this->it_mutex);
-    return prev_it;
+    //Iterator prev_it(this->ptr->getPrev());
+    //prev_it.setMutex(this->it_mutex);
+    return { this->ptr->getPrev() };
   }
 
   Iterator next() const {
-    Iterator next_it(this->ptr->getNext());
-    next_it.setMutex(this->it_mutex);
-    return next_it;
+    //Iterator next_it(this->ptr->getNext());
+    //next_it.setMutex(this->it_mutex);
+    return { this->ptr->getNext() };
   }
 
-  void setMutex(std::shared_mutex* mutex) {
+  /*void setMutex(std::shared_mutex* mutex) {
     this->it_mutex = mutex;
-  }
+  }*/
 
 private:
   Iterator(Node<T>* ptr_) noexcept : ptr(ptr_) {
@@ -182,5 +182,5 @@ private:
   }
 
   Node<T>* ptr;
-  std::shared_mutex *it_mutex;
+  //std::shared_mutex *it_mutex;
 };

@@ -13,17 +13,13 @@ protected:
   using difference_type = std::ptrdiff_t;
 
 private:
-  node_pointer prev_;
-  node_pointer next_;
-  //size_type ref_count_;
-  bool deleted_;
-  std::atomic<size_type> ref_count_;
-  //std::atomic<bool> deleted_;
-  //mutable std::shared_mutex mutex_;
+  volatile node_pointer prev_;
+  volatile node_pointer next_;
+  volatile std::atomic<size_type> ref_count_;
+  volatile std::atomic<bool> deleted_;
+  std::shared_mutex rwlock_;
 public:
   node_reference operator =(node_const_reference other_node) {
-
-    //std::unique_lock lock(this->ptr->getMutex());
 
     this->ref_count_ = other_node.ref_count_;
     this->prev_ = other_node.prev_;
@@ -31,9 +27,13 @@ public:
     return *this;
   }
 
-  //std::shared_mutex& getMutex() {
-  //  return this->mutex_;
-  //}
+  std::shared_mutex& getRWLock() {
+    return this->rwlock_;
+  }
+  
+  /*void setRWLock(std::shared_mutex mut) {
+    this->rwlock_ = mut;
+  }*/
 
   size_type getRefCount() const {
     return this->ref_count_;

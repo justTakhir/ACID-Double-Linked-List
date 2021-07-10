@@ -105,17 +105,18 @@ public:
   void assign(std::initializer_list<value_type> init_list);
 
   iterator begin() noexcept {
-    iterator begin_it(this->sentinel.getNext());
-    begin_it.setMutex(&this->list_mutex);
-    return begin_it;
+    //std::shared_lock<std::shared_mutex> lock1(this->sentinel.getRWLock());
+    if (this->size() > 0) {
+      std::shared_lock<std::shared_mutex> lock1(this->sentinel.getNext()->getRWLock());
+    }
+    return { this->sentinel.getNext() };
   }
   const_iterator begin() const noexcept {
     return this->cbegin();
   }
   iterator end() noexcept {
-    iterator end_it(&this->sentinel);
-    end_it.setMutex(&this->list_mutex);
-    return end_it;
+    //std::shared_lock<std::shared_mutex> lock1(this->sentinel.getRWLock());
+    return { &this->sentinel };
   }
   const_iterator end() const noexcept {
     return this->cend();
@@ -125,25 +126,26 @@ public:
   // reverse_iterator rend() noexcept;
   // const_reverse_iterator rend() const noexcept;
   const_iterator cbegin() const noexcept {
-    const_iterator cbegin_it(this->sentinel.getNext());
-    cbegin_it.setMutex(&this->list_mutex);
-    return cbegin_it;
+//    std::shared_lock<std::shared_mutex> lock1(this->sentinel.getRWLock());
+    if (this->size() > 0) {
+      std::shared_lock<std::shared_mutex> lock2(this->sentinel.getNext()->getRWLock());
+    }
+    return { this->sentinel.getNext() };
   }
   const_iterator cend() const noexcept {
-    const_iterator cend_it(&this->sentinel);
-    cend_it.setMutex(&this->list_mutex);
-    return cend_it;
+    //std::shared_lock<std::shared_mutex> lock1(this->sentinel.getRWLock());
+    return { &this->sentinel };
   }
   // const_reverse_iterator crbegin() const noexcept;
   // const_reverse_iterator crend() const noexcept;
 
   bool empty() const noexcept {
-    std::shared_lock<std::shared_mutex> lock(this->list_mutex);
+    //std::shared_lock<std::shared_mutex> lock(this->list_mutex);
     return this->size() == 0;
   }
 
   size_type size() const noexcept {
-    std::shared_lock<std::shared_mutex> lock(this->list_mutex);
+    //std::shared_lock<std::shared_mutex> lock(this->list_mutex);
     return this->list_size;
   }
   //size_type max_size() const noexcept;
@@ -206,27 +208,143 @@ public:
   }
 
   iterator insert(const_iterator position, const T& x) {
+    std::unique_lock<std::shared_mutex> tmp_lock(position.ptr->getRWLock());
+    if (this->size() == 0) {
+      tmp_lock.unlock();
+      std::unique_lock<std::shared_mutex> node_lock(position.ptr->getRWLock());
 
-    std::unique_lock<std::shared_mutex> lock(this->list_mutex);
+      iterator pos(position.ptr);
 
-    iterator pos(position.ptr);
+      node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
 
-    node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
+      pos.ptr->getPrev()->setNext(inserted_node);
+      pos.ptr->setPrev(inserted_node);
 
-    pos.ptr->getPrev()->setNext(inserted_node);
-    
-    pos.ptr->setPrev(inserted_node);
-    
-    this->list_size++;
+      this->list_size++;
+      iterator it_to_inserted_node(inserted_node);
+      return it_to_inserted_node;
+    }
 
-    iterator it_to_inserted_node(inserted_node);
-    it_to_inserted_node.setMutex(position.it_mutex);
-    return it_to_inserted_node;
+    if (this->size() == 1) {
+      
+      node_type* node = position.ptr;
+      tmp_lock.unlock();
+      for (bool retry = true; retry;) {
+        retry = false;
+
+        if (node->isDeleted()) {
+          return { position.ptr };
+        }
+
+        std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+
+        node_type* prev = node->getPrev();
+        assert(prev->getRefCount());
+        prev->addRefCount();
+
+        node_type* next = node->getNext();
+        assert(next->getRefCount());
+        next->addRefCount();
+
+        lock.unlock();
+
+        // RACES
+
+        std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+        std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+        //std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+
+        if (prev->getNext() == node && next->getPrev() == node) {
+
+          iterator pos(position.ptr);
+
+          node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
+
+          pos.ptr->getPrev()->setNext(inserted_node);
+          pos.ptr->setPrev(inserted_node);
+
+          this->list_size++;
+          iterator it_to_inserted_node(inserted_node);
+
+          //prev_lock.unlock();
+          //node_lock.unlock();
+          //next_lock.unlock();
+          return it_to_inserted_node;
+        }
+        else {
+          retry = true;
+        }
+        prev->subRefCount();
+        next->subRefCount();
+
+        prev_lock.unlock();
+        node_lock.unlock();
+        //next_lock.unlock();
+
+      }
+    }
+
+    node_type* node = position.ptr;
+    tmp_lock.unlock();
+    for (bool retry = true; retry;) {
+      retry = false;
+
+      if (node->isDeleted()) {
+        return { position.ptr };
+      }
+
+      std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+
+      node_type* prev = node->getPrev();
+      assert(prev->getRefCount());
+      prev->addRefCount();
+
+      node_type* next = node->getNext();
+      assert(next->getRefCount());
+      next->addRefCount();
+
+      lock.unlock();
+
+      // RACES
+
+      std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+      std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+      std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+
+      if (prev->getNext() == node && next->getPrev() == node) {
+
+        iterator pos(position.ptr);
+
+        node_type* inserted_node = new TrueNode<T>(x, pos.ptr->getPrev(), pos.ptr);
+
+        pos.ptr->getPrev()->setNext(inserted_node);
+        pos.ptr->setPrev(inserted_node);
+
+        this->list_size++;
+        iterator it_to_inserted_node(inserted_node);
+
+        //prev_lock.unlock();
+        //node_lock.unlock();
+        //next_lock.unlock();
+        return it_to_inserted_node;
+      }
+      else {
+        retry = true;
+      }
+      prev->subRefCount();
+      next->subRefCount();
+
+      prev_lock.unlock();
+      node_lock.unlock();
+      next_lock.unlock();
+      
+    }
+
+
   }
 
   iterator insert(const_iterator position, size_type n, const T& x) {
     iterator it_to_inserted_node(position.ptr);
-    it_to_inserted_node.setMutex(position.it_mutex);
     for (size_type i = 0; i < n; i++) {
       it_to_inserted_node = this->insert(it_to_inserted_node, x);
     }
@@ -237,39 +355,35 @@ public:
   iterator insert(const_iterator position, InputIterator first, InputIterator last) {
 
     iterator it_to_inserted_node(position.ptr);
-    it_to_inserted_node.setMutex(position.it_mutex);
+
     auto it = std::prev(last);
 
     for (; it != first; it--) {//--?
       it_to_inserted_node = this->insert(it_to_inserted_node, *it);
     }
-    iterator ready_it_to_inserted_node = this->insert(it_to_inserted_node, *it);
-    ready_it_to_inserted_node.setMutex(it_to_inserted_node.it_mutex);
-    return ready_it_to_inserted_node;
+    return this->insert(it_to_inserted_node, *it);;
   }
 
   iterator insert(const_iterator position, std::initializer_list<T> init_list) {
-    iterator ready_it_to_inserted_node = this->insert(position, init_list.begin(), init_list.end());
-    ready_it_to_inserted_node.setMutex(position.it_mutex);
-    return ready_it_to_inserted_node;
+    return this->insert(position, init_list.begin(), init_list.end());;
   }
 
   iterator erase(const_iterator position) {
-    std::unique_lock<std::shared_mutex> lock(this->list_mutex);
-    
+    //std::unique_lock<std::shared_mutex> lock(this->list_mutex);
+
     if (position.ptr->isDeleted()) {
-      throw DeleteDeletedException("Try to delete already deleted node!");
+      return { position.ptr };
+
+      //throw DeleteDeletedException("Try to delete already deleted node!");
     }
 
     if (position == this->end()) {
       throw EraseException("Can't erase end()");
     }
-    
-    const_iterator c_new_position = position.next();
+
+    const_iterator new_position = position.next();
     this->delete_node(position.ptr);
-    iterator new_position(c_new_position.ptr);
-    new_position.setMutex(position.it_mutex);
-    return new_position;
+    return { new_position.ptr };
   }
 
   iterator erase(const_iterator position, const_iterator last) {
@@ -277,7 +391,6 @@ public:
     //не нужно, потому что вызывается ирэйс для одной ноды, в котором она блочится std::unique_lock lock(position.ptr->getMutex());
 
     iterator new_position(position.ptr);
-    new_position.setMutex(position.it_mutex);
     for (; position != last; position++) {
       new_position = this->erase(position);
     }
@@ -371,7 +484,7 @@ public:
 private:
   SentinelNode<T> sentinel;
   size_type list_size = size_type();
-  mutable std::shared_mutex list_mutex;
+  //mutable std::shared_mutex list_mutex;
 
   static void swap_nodes(node_type* node1, node_type* node2) { // todo
 
@@ -399,7 +512,6 @@ private:
 
   node_type* search_node(node_type* start_node, const_reference value) {
     const_iterator it(start_node);
-    it.setMutex(&this->list_mutex);
     while (it != this->end() && *it != value) {
       it++;
     }
@@ -408,21 +520,174 @@ private:
   }
 
   void delete_node(node_type* deleted_node) {
-    deleted_node->setDeleted();
-    deleted_node->getPrev()->setNext(deleted_node->getNext());
-    deleted_node->getNext()->setPrev(deleted_node->getPrev());
+    
+    if (this->size() == 0) {
 
-    if (!deleted_node->getPrev()->checkSentinel()) {
-      deleted_node->getPrev()->addRefCount();
+      std::unique_lock<std::shared_mutex> node_lock(deleted_node->getRWLock());
+
+      deleted_node->setDeleted();
+      deleted_node->getPrev()->setNext(deleted_node->getNext());
+      deleted_node->getNext()->setPrev(deleted_node->getPrev());
+
+      if (!deleted_node->getPrev()->checkSentinel()) {
+        deleted_node->getPrev()->addRefCount();
+      }
+
+      if (!deleted_node->getNext()->checkSentinel()) {
+        deleted_node->getNext()->addRefCount();
+      }
+
+      deleted_node->setRefCount(deleted_node->getRefCount() - 2);
+
+      this->list_size--;
+
     }
 
-    if (!deleted_node->getNext()->checkSentinel()) {
-      deleted_node->getNext()->addRefCount();
+    if (this->size() == 1) {
+      node_type* node = deleted_node;
+      for (bool retry = true; retry;) {
+        retry = false;
+
+        if (node->isDeleted()) {
+          return;
+        }
+
+        std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+        node_type* prev = node->getPrev();
+        assert(prev->getRefCount());
+        prev->addRefCount();
+
+        node_type* next = node->getNext();
+        assert(next->getRefCount());
+        next->addRefCount();
+
+        lock.unlock();
+
+        // RACES
+
+        std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+        std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+        //std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+
+        if (prev->getNext() == node && next->getPrev() == node) {
+          deleted_node->setDeleted();
+          deleted_node->getPrev()->setNext(deleted_node->getNext());
+          deleted_node->getNext()->setPrev(deleted_node->getPrev());
+
+          if (!deleted_node->getPrev()->checkSentinel()) {
+            deleted_node->getPrev()->addRefCount();
+          }
+
+          if (!deleted_node->getNext()->checkSentinel()) {
+            deleted_node->getNext()->addRefCount();
+          }
+
+          deleted_node->setRefCount(deleted_node->getRefCount() - 2);
+
+          this->list_size--;
+        }
+        else {
+          retry = true;
+        }
+        prev->subRefCount();
+        next->subRefCount();
+
+        prev_lock.unlock();
+        node_lock.unlock();
+        //next_lock.unlock();
+      }
     }
 
-    deleted_node->setRefCount(deleted_node->getRefCount() - 2);
+    node_type* node = deleted_node;
+    for (bool retry = true; retry;) {
+      retry = false;
 
-    this->list_size--;
+      if (node->isDeleted()) {
+        return;
+      }
+
+      std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+      node_type* prev = node->getPrev();
+      assert(prev->getRefCount());
+      prev->addRefCount();
+
+      node_type* next = node->getNext();
+      assert(next->getRefCount());
+      next->addRefCount();
+
+      lock.unlock();
+
+      // RACES
+
+      std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+      std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+      std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+
+      if (prev->getNext() == node && next->getPrev() == node) {
+        deleted_node->setDeleted();
+        deleted_node->getPrev()->setNext(deleted_node->getNext());
+        deleted_node->getNext()->setPrev(deleted_node->getPrev());
+
+        if (!deleted_node->getPrev()->checkSentinel()) {
+          deleted_node->getPrev()->addRefCount();
+        }
+
+        if (!deleted_node->getNext()->checkSentinel()) {
+          deleted_node->getNext()->addRefCount();
+        }
+
+        deleted_node->setRefCount(deleted_node->getRefCount() - 2);
+
+        this->list_size--;
+      }
+      else {
+        retry = true;
+      }
+      prev->subRefCount();
+      next->subRefCount();
+
+      prev_lock.unlock();
+      node_lock.unlock();
+      next_lock.unlock();
+    }
+  
   }
+
+  // PSEUDO CODE
+    //auto* node = it.node;
+    //for (bool retry = true; retry;) {
+    //  retry = false;
+
+    //  if (node->deleted) {
+    //    return;
+    //  }
+
+    //  auto* node = it.node;
+
+    //  node->lock_read();
+    //  auto prev = node->prev;
+    //  assert(next->ref_count);
+    //  next->ref_count++;
+
+    //  node->unlock();
+    //  // RACES
+
+    //  prev->lock_write();
+    //  node->lock_read();
+    //  next->lock_write();
+    //  if (prev->next == node && next->prev == node) {
+    //    prev->next = next;
+    //    next->prev = prev;
+    //  }
+    //  else {
+    //    retry = true;
+    //  }
+    //  prev->ref_count--;
+    //  next->ref_count--;
+    //  prev->unlock();
+    //  node->unlock();
+    //  next->unlock();
+    //}
+    // BE CAREFUL: iterator (or node) must be local va
 
 };
