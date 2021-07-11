@@ -1,6 +1,7 @@
 #pragma once
 #include <shared_mutex>
 #include <atomic>
+#include "SpinlockBasedRWLock.hpp"
 
 template<typename T>
 class Node {
@@ -28,6 +29,7 @@ public:
   }
 
   std::shared_mutex& getRWLock() {
+  //RWLock getRWLock(){
     return this->rwlock_;
   }
   

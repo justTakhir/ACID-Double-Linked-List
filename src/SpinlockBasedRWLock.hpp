@@ -48,4 +48,8 @@ class RWLock {
       val--;
     }
   }
+
+  ~RWLock() {
+    this->unlock();
+  }
 };
