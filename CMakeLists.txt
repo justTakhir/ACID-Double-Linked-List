@@ -23,7 +23,8 @@ target_sources(consistent-list INTERFACE
     ${PROJECT_SOURCE_DIR}/src/Node.hpp
     ${PROJECT_SOURCE_DIR}/src/SentinelNode.hpp
     ${PROJECT_SOURCE_DIR}/src/TrueNode.hpp
-)
+    ${PROJECT_SOURCE_DIR}/src/SpinlockBasedRWLock.hpp
+) 
 
 enable_testing()
 

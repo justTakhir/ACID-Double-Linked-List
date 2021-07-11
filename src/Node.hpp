@@ -61,6 +61,7 @@ public:
       if (!this->getNext()->checkSentinel()){
         this->getNext()->subRefCount();
       }
+      //pullToPurgatory(this)
       delete this;
     }
   }
