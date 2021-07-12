@@ -76,46 +76,6 @@ TEST(DeleteTests, EraseInSameTime) {
   ASSERT_TRUE(list.size() == 3);
 }
 
-//TEST(DeleteTests, EraseInSameTime2) {
-//  //from wiki
-//  int32_t k = 0;
-//  while (k < 100) {
-//    ConsistentList<int32_t> list = { 1, 2, 3, 4, 5 };
-//    //auto it2 = list.begin() + 2;
-//    auto it1 = list.begin();//it2++;
-//
-//    std::thread th1([&] {
-//      list.erase(it1);
-//      std::cout << "1 started " << std::endl;
-//      });
-//
-//    std::thread th2([&] {
-//      std::cout << "2 started " << std::endl;
-//      it1++;
-//      it1++;
-//      });
-//
-//    std::thread th3([&] {
-//      std::cout << "3 started " << std::endl;
-//      list.erase(it1);
-//      });
-//
-//    th1.join();
-//    th2.join();
-//    th3.join();
-//
-//    std::list<int32_t> std_list({ 2, 4, 5 });
-//
-//    //std::this_thread::sleep_for(2000);
-//
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-//
-//    ASSERT_TRUE(list.size() == 3);
-//    ASSERT_TRUE(list == std_list);
-//    k++;
-//  }
-//}
-
 //TEST(DeleteTests, UnsafeErase) {
 //  int32_t k = 0;
 //  while (k < 1000) {
@@ -225,7 +185,7 @@ TEST(ReadTests, SimpleDataOnlyReading) {
 
 TEST(ReadTests, HardDataOnlyReading) {
   int32_t k = 0;
-  while (k < 10) {
+  while (k < 1) {
     ConsistentList<int32_t> list;
     for (int32_t i = 0; i < 10010; i++) {
       list.push_back(i);
@@ -290,6 +250,7 @@ TEST(ReadTests, HardDataReading) {
   for (size_t i = 0; i < 4; i++) {
     threads.push_back(std::thread([&]() {
       for (auto it1 = list.begin(); it1 != (it + ((*it) * i - 1)); it1++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         for_init = *(it1);
         //std::cout << "For Thread: " << std::this_thread::get_id() << " have " << for_init << std::endl;
       }
@@ -404,7 +365,7 @@ TEST(OnlyInsert, LeftToRight) {
     //for (auto it1 = start; it1 != end; it1++) {
     for (; start != end; start = start + 1) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      //std::cout << "Now is " << *start << std::endl;
+      std::cout << "Now is " << *start << std::endl;
       list.insert(start, counter);
       counter++;
     }
@@ -418,7 +379,7 @@ TEST(OnlyInsert, LeftToRight) {
   std::thread th3(insert, begin + 2000, begin + 2999);
   std::thread th4(insert, begin + 3000, begin + 3999);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+  //std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
   th1.join();
   th2.join();
@@ -434,15 +395,15 @@ TEST(OnlyInsert, LeftToRight) {
         continue;
       }
       //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
-      //if (*it1 == *it2) {
-      //  std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
-      //}
+      if (*it1 == *it2) {
+        std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+      }
       ASSERT_TRUE(*it1 != *it2);
       count2++;
     }
     count1++;
   }
-  //std::cout << "List size is: " << list.size() << std::endl;
+  std::cout << "List size is: " << list.size() << std::endl;
 }
 
 TEST(OnlyInsert, RightToLeft) {
@@ -459,7 +420,7 @@ TEST(OnlyInsert, RightToLeft) {
     //for (auto it1 = start; it1 != end; it1++) {
     for (; start != end; start = start - 2) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    //  std::cout << "Now is " << *start << std::endl;
+      std::cout << "Now is " << *start << std::endl;
       list.insert(start, counter);
       counter++;
     }
@@ -472,7 +433,7 @@ TEST(OnlyInsert, RightToLeft) {
   std::thread th3(insert, begin + 1999, begin + 999);
   std::thread th4(insert, begin + 999, begin - 1);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+  //std::this_thread::sleep_for(std::chrono::milliseconds(20000));
 
   th1.join();
   th2.join();
@@ -583,7 +544,7 @@ TEST(OnlyErase, LeftToRight) {
     //std::cout << "Now is " << i << std::endl;
   }
 
-  auto insert = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+  auto erase = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
     int32_t counter = 1000000 + *start;
     auto it = start;
     //for (auto it1 = start; it1 != end; it1++) {
@@ -591,7 +552,7 @@ TEST(OnlyErase, LeftToRight) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       std::cout << "Now is " << *start << std::endl;
       if (start == list.end()) {
-        continue;
+        return;
       }
       list.erase(start);
       counter++;
@@ -601,12 +562,12 @@ TEST(OnlyErase, LeftToRight) {
   };
   auto begin = list.begin();
 
-  std::thread th1(insert, begin, begin + 999);
-  std::thread th2(insert, begin + 1000, begin + 1999);
-  std::thread th3(insert, begin + 2000, begin + 2999);
-  std::thread th4(insert, begin + 3000, begin + 3999);
+  std::thread th1(erase, begin, begin + 999);
+  std::thread th2(erase, begin + 1000, begin + 1999);
+  std::thread th3(erase, begin + 2000, begin + 2999);
+  std::thread th4(erase, begin + 3000, begin + 3999);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+  //std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
   th1.join();
   th2.join();
@@ -623,7 +584,7 @@ TEST(OnlyErase, LeftToRight) {
       }
       //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
       if (*it1 == *it2) {
-        std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
+        //std::cout << "Compared: " << *it1 << " " << *it2 << " " << count1 << " " << count2 << " " << std::endl;
       }
       ASSERT_TRUE(*it1 != *it2);
       count2++;
@@ -641,7 +602,7 @@ TEST(OnlyErase, RightToLeft) {
     //std::cout << "Now is " << i << std::endl;
   }
 
-  auto insert = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
+  auto erase = [&](Iterator<int32_t> start, Iterator<int32_t> end) {
     int32_t counter = 1000000 + *start;
     auto it = start;
     //for (auto it1 = start; it1 != end; it1++) {
@@ -661,12 +622,12 @@ TEST(OnlyErase, RightToLeft) {
   };
   auto begin = list.begin();
 
-  std::thread th1(insert, begin + 3999, begin + 3000);
-  std::thread th2(insert, begin + 2999, begin + 2000);
-  std::thread th3(insert, begin + 1999, begin + 1000);
-  std::thread th4(insert, begin + 999, begin);
+  std::thread th1(erase, begin + 3999, begin + 3000);
+  std::thread th2(erase, begin + 2999, begin + 2000);
+  std::thread th3(erase, begin + 1999, begin + 1000);
+  std::thread th4(erase, begin + 999, begin);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+  //std::this_thread::sleep_for(std::chrono::milliseconds(20000));
 
   th1.join();
   th2.join();

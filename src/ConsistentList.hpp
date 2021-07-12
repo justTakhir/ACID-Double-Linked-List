@@ -106,9 +106,10 @@ public:
 
   iterator begin() noexcept {
     //std::shared_lock<std::shared_mutex> lock1(this->sentinel.getRWLock());
-    if (this->size() > 0) {
-      std::shared_lock<std::shared_mutex> lock1(this->sentinel.getNext()->getRWLock());
-    }
+    //if (this->size() > 0) {
+      //std::shared_lock<std::shared_mutex> lock1(this->sentinel.getNext()->getRWLock());
+      //this->sentinel.getNext()->getRWLock()->rlock();
+    //}
     return { this->sentinel.getNext() };
   }
   const_iterator begin() const noexcept {
@@ -127,9 +128,10 @@ public:
   // const_reverse_iterator rend() const noexcept;
   const_iterator cbegin() const noexcept {
 //    std::shared_lock<std::shared_mutex> lock1(this->sentinel.getRWLock());
-    if (this->size() > 0) {
-      std::shared_lock<std::shared_mutex> lock2(this->sentinel.getNext()->getRWLock());
-    }
+    //if (this->size() > 0) {
+      //std::shared_lock<std::shared_mutex> lock2(this->sentinel.getNext()->getRWLock());
+      //this->sentinel.getNext()->getRWLock()->rlock();
+    //}
     return { this->sentinel.getNext() };
   }
   const_iterator cend() const noexcept {
@@ -208,10 +210,14 @@ public:
   }
 
   iterator insert(const_iterator position, const T& x) {
-    std::unique_lock<std::shared_mutex> tmp_lock(position.ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> tmp_lock(position.ptr->getRWLock());
+    //position.ptr->getRWLock().wlock();
+    
     if (this->size() == 0) {
-      tmp_lock.unlock();
-      std::unique_lock<std::shared_mutex> node_lock(position.ptr->getRWLock());
+    //  tmp_lock->unlock();
+      //std::unique_lock<std::shared_mutex> node_lock(position.ptr->getRWLock());
+      RWLock* node_lock = position.ptr->getRWLock();
+      node_lock->wlock();
 
       iterator pos(position.ptr);
 
@@ -222,13 +228,14 @@ public:
 
       this->list_size++;
       iterator it_to_inserted_node(inserted_node);
+      node_lock->unlock();
       return it_to_inserted_node;
     }
 
     if (this->size() == 1) {
       
       node_type* node = position.ptr;
-      tmp_lock.unlock();
+      //tmp_lock->unlock();
       for (bool retry = true; retry;) {
         retry = false;
 
@@ -236,7 +243,9 @@ public:
           return { position.ptr };
         }
 
-        std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+        //std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+        RWLock* lock = node->getRWLock();
+        lock->rlock();
 
         node_type* prev = node->getPrev();
         assert(prev->getRefCount());
@@ -246,13 +255,16 @@ public:
         assert(next->getRefCount());
         next->addRefCount();
 
-        lock.unlock();
+        lock->unlock();
 
         // RACES
 
-        std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
-        std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
-        //std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+        //std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+        RWLock* prev_lock = prev->getRWLock();
+        prev_lock->wlock();
+        //std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+        RWLock* node_lock = node->getRWLock();
+        node_lock->rlock();
 
         if (prev->getNext() == node && next->getPrev() == node) {
 
@@ -266,9 +278,8 @@ public:
           this->list_size++;
           iterator it_to_inserted_node(inserted_node);
 
-          //prev_lock.unlock();
-          //node_lock.unlock();
-          //next_lock.unlock();
+          prev_lock->unlock();
+          node_lock->unlock();
           return it_to_inserted_node;
         }
         else {
@@ -277,15 +288,15 @@ public:
         prev->subRefCount();
         next->subRefCount();
 
-        prev_lock.unlock();
-        node_lock.unlock();
+        prev_lock->unlock();
+        node_lock->unlock();
         //next_lock.unlock();
 
       }
     }
-
+    
     node_type* node = position.ptr;
-    tmp_lock.unlock();
+    //tmp_lock->unlock();
     for (bool retry = true; retry;) {
       retry = false;
 
@@ -293,8 +304,10 @@ public:
         return { position.ptr };
       }
 
-      std::shared_lock<std::shared_mutex> lock(node->getRWLock());
-
+      //std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+      node->getRWLock()->rlock();
+      //lock->rlock();
+      
       node_type* prev = node->getPrev();
       assert(prev->getRefCount());
       prev->addRefCount();
@@ -303,13 +316,21 @@ public:
       assert(next->getRefCount());
       next->addRefCount();
 
-      lock.unlock();
+      node->getRWLock()->unlock();
 
       // RACES
 
-      std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
-      std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
-      std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+      //std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+      RWLock* prev_lock = prev->getRWLock();
+      prev_lock->wlock();
+
+      //std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+      RWLock* node_lock = node->getRWLock();
+      node_lock->rlock();
+
+      //std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+      RWLock* next_lock = next->getRWLock();
+      next_lock->wlock();
 
       if (prev->getNext() == node && next->getPrev() == node) {
 
@@ -323,9 +344,9 @@ public:
         this->list_size++;
         iterator it_to_inserted_node(inserted_node);
 
-        //prev_lock.unlock();
-        //node_lock.unlock();
-        //next_lock.unlock();
+        prev_lock->unlock();
+        node_lock->unlock();
+        next_lock->unlock();
         return it_to_inserted_node;
       }
       else {
@@ -334,9 +355,9 @@ public:
       prev->subRefCount();
       next->subRefCount();
 
-      prev_lock.unlock();
-      node_lock.unlock();
-      next_lock.unlock();
+      prev_lock->unlock();
+      node_lock->unlock();
+      next_lock->unlock();
       
     }
 
@@ -370,7 +391,7 @@ public:
 
   iterator erase(const_iterator position) {
     //std::unique_lock<std::shared_mutex> lock(this->list_mutex);
-
+    //position.ptr->getRWLock()->rlock();
     if (position.ptr->isDeleted()) {
       return { position.ptr };
 
@@ -380,6 +401,7 @@ public:
     if (position == this->end()) {
       throw EraseException("Can't erase end()");
     }
+    position.ptr->getRWLock()->unlock();
 
     const_iterator new_position = position.next();
     this->delete_node(position.ptr);
@@ -406,7 +428,6 @@ public:
     while(!this->empty()) {
       this->pop_front();
     }
-
 
   }
 
@@ -523,7 +544,9 @@ private:
     
     if (this->size() == 0) {
 
-      std::unique_lock<std::shared_mutex> node_lock(deleted_node->getRWLock());
+      //std::unique_lock<std::shared_mutex> node_lock(deleted_node->getRWLock());
+      RWLock* lock = deleted_node->getRWLock();
+      lock->wlock();
 
       deleted_node->setDeleted();
       deleted_node->getPrev()->setNext(deleted_node->getNext());
@@ -540,7 +563,7 @@ private:
       deleted_node->setRefCount(deleted_node->getRefCount() - 2);
 
       this->list_size--;
-
+      lock->unlock();
     }
 
     if (this->size() == 1) {
@@ -552,7 +575,10 @@ private:
           return;
         }
 
-        std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+        //std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+        RWLock* lock = node->getRWLock();
+        lock->rlock();
+
         node_type* prev = node->getPrev();
         assert(prev->getRefCount());
         prev->addRefCount();
@@ -561,13 +587,16 @@ private:
         assert(next->getRefCount());
         next->addRefCount();
 
-        lock.unlock();
+        lock->unlock();
 
         // RACES
 
-        std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
-        std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
-        //std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+        //std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+        RWLock* prev_lock = prev->getRWLock();
+        prev_lock->wlock();
+        //std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+        RWLock* node_lock = node->getRWLock();
+        node_lock->rlock();
 
         if (prev->getNext() == node && next->getPrev() == node) {
           deleted_node->setDeleted();
@@ -592,8 +621,8 @@ private:
         prev->subRefCount();
         next->subRefCount();
 
-        prev_lock.unlock();
-        node_lock.unlock();
+        prev_lock->unlock();
+        node_lock->unlock();
         //next_lock.unlock();
       }
     }
@@ -606,7 +635,10 @@ private:
         return;
       }
 
-      std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+      //std::shared_lock<std::shared_mutex> lock(node->getRWLock());
+      RWLock* lock = node->getRWLock();
+      lock->rlock();
+
       node_type* prev = node->getPrev();
       assert(prev->getRefCount());
       prev->addRefCount();
@@ -615,13 +647,21 @@ private:
       assert(next->getRefCount());
       next->addRefCount();
 
-      lock.unlock();
+      lock->unlock();
 
       // RACES
 
-      std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
-      std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
-      std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+      //std::unique_lock<std::shared_mutex> prev_lock(prev->getRWLock());
+      RWLock* prev_lock = prev->getRWLock();
+      prev_lock->wlock();
+
+      //std::shared_lock<std::shared_mutex> node_lock(node->getRWLock());
+      RWLock* node_lock = node->getRWLock();
+      node_lock->rlock();
+
+      //std::unique_lock<std::shared_mutex> next_lock(next->getRWLock());
+      RWLock* next_lock = next->getRWLock();
+      next_lock->wlock();
 
       if (prev->getNext() == node && next->getPrev() == node) {
         deleted_node->setDeleted();
@@ -646,9 +686,9 @@ private:
       prev->subRefCount();
       next->subRefCount();
 
-      prev_lock.unlock();
-      node_lock.unlock();
-      next_lock.unlock();
+      prev_lock->unlock();
+      node_lock->unlock();
+      next_lock->unlock();
     }
   
   }

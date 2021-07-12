@@ -18,34 +18,44 @@ public:
 
   Iterator& operator=(const Iterator& other) {
 
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    other.ptr->getRWLock()->wlock();
+    RWLock* lock = this->ptr->getRWLock();
+    lock->wlock();
 
     this->ptr->subRefCount();
     this->ptr = other.ptr;
     this->ptr->addRefCount();
+
+    lock->unlock();
+    other.ptr->getRWLock()->unlock();
     return *this;
   }
 
   Iterator& operator++() {//pre
     
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-      
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
+
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
+    this->ptr->getRWLock()->unlock();
     return *this;
   }
 
   Iterator operator++(int) {//postfix
     
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
 
     auto tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
+    this->ptr->getRWLock()->unlock();
     return tmp;
   }
 
@@ -65,7 +75,8 @@ public:
   template<typename S>
   Iterator operator+(S step) {
 
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
 
     auto new_value = *this;
     for (S i = 0; i < step; i++) {
@@ -73,35 +84,43 @@ public:
       new_value.ptr = new_value.ptr->getNext();
       new_value.ptr->addRefCount();
     }
+
+    this->ptr->getRWLock()->unlock();
+
     return new_value;
   }
 
   Iterator& operator--() {//pre
 
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
+    this->ptr->getRWLock()->unlock();
     return *this;
   }
 
   Iterator operator--(int) {//post
 
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
 
     auto tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
+    this->ptr->getRWLock()->unlock();
     return tmp;
   }
 
   Iterator operator-(size_t step) {
 
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -109,12 +128,15 @@ public:
       new_value.ptr = new_value.ptr->getPrev();
       new_value.ptr->addRefCount();
     }
+
+    this->ptr->getRWLock()->unlock();
     return new_value;
   }
 
   Iterator operator-(int step) {
 
-    std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -123,6 +145,7 @@ public:
       new_value.ptr->addRefCount();
     }
 
+    this->ptr->getRWLock()->unlock();
     return new_value;
   }
 
@@ -131,18 +154,21 @@ public:
       throw IteratorDereferencingException("Try to dereferencing end iterator.");
     }
     
-    std::shared_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::shared_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    this->ptr->getRWLock()->rlock();
 
     TrueNode<T>* ptr = dynamic_cast<TrueNode<T>*>(this->ptr);
     if (ptr == nullptr) {
       std::abort();
     }
-
+    this->ptr->getRWLock()->unlock();
     return ptr->getValue();
   }
 
   T* operator ->() const {
-    std::shared_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //std::shared_lock<std::shared_mutex> lock(this->ptr->getRWLock());
+    //this->ptr->getRWLock()->rlock();
+
     return &this->ptr->getValue();
   }
 

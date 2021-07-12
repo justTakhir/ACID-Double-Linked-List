@@ -17,8 +17,9 @@ private:
   volatile node_pointer prev_;
   volatile node_pointer next_;
   volatile std::atomic<size_type> ref_count_;
+  //size_type ref_count_;
   volatile std::atomic<bool> deleted_;
-  std::shared_mutex rwlock_;
+  RWLock rwlock_;
 public:
   node_reference operator =(node_const_reference other_node) {
 
@@ -28,9 +29,9 @@ public:
     return *this;
   }
 
-  std::shared_mutex& getRWLock() {
+  RWLock *getRWLock() {
   //RWLock getRWLock(){
-    return this->rwlock_;
+    return &this->rwlock_;
   }
   
   /*void setRWLock(std::shared_mutex mut) {
@@ -64,7 +65,7 @@ public:
         this->getNext()->subRefCount();
       }
       //pullToPurgatory(this)
-      delete this;
+      //delete this;
     }
   }
 
