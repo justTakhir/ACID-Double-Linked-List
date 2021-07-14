@@ -235,6 +235,10 @@ public:
       return it_to_inserted_node;
     }
 
+    //this->debug_lock.rlock();
+    std::unique_lock<std::mutex> debug_lock(debug_mutex);
+    this->debug_cv.wait(debug_lock, [&]() { return this->run; });
+
     if (this->size() == 1) {
       
       node_type* node = position.ptr;
@@ -505,6 +509,10 @@ public:
     *this = tmp;
   }
 
+  bool run;
+  std::condition_variable debug_cv;
+  std::mutex debug_mutex;
+  RWLock debug_lock;
 private:
   SentinelNode<T> sentinel;
   size_type list_size = size_type();

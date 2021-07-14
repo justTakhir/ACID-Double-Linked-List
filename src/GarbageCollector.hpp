@@ -20,15 +20,6 @@ template <class T>
 class ConstIterator;
 
 template <class T>
-struct gc_node{
-//public:
-  Node<T>* node_;
-  bool marked_ = false;
-public:
- gc_node(Node<T>* node, bool marked = false) : node_(node), marked_(node) {}
-};
-
-template <class T>
 class GarbageCollector {
   friend class Iterator<T>;
   friend class ConstIterator<T>;
@@ -38,7 +29,7 @@ private:
   //std::vector<gc_node<T>> nodes_;
   std::vector <std::pair<Node<T>*, bool>> nodes_;
   std::thread thr_;
-  RWLock gc_lock_;
+  //RWLock gc_lock_;
   bool stoped_;
 public:
   GarbageCollector() {
@@ -55,18 +46,15 @@ public:
     return &this->thr_;
   }
 
-  RWLock* getLock() {
-    return &this->gc_lock_;
-  }
+  //RWLock* getLock() {
+   // return &this->gc_lock_;
+  //}
 
   void putNodeToGC(Node<T>* node){
-    //gc_node buf_node(node, false);
-    //buf_node.marked_ = false;
-    //this->nodes_.push_front(buf_node);
+
     std::pair<Node<T>*, bool> buf;
     buf.first = node;
     buf.second = false;
-    //this->nodes_.insert(this->nodes_.begin(), buf_node);
     this->nodes_.insert(this->nodes_.begin(), buf);
   }
 
@@ -78,12 +66,6 @@ public:
   //void killNode(gc_node *node) {
   template <typename U>
   void killNode(U node_it){
-    //gc_node<T>* node = *node_it;
-    //TrueNode<T>* victim = node->node_;
-    //this->nodes_.erase(node_it);
-    //delete victim;
-    //delete (&node);
-    //std::pair<TrueNode<T>*, bool> buf;
     this->nodes_.erase(node_it);
     delete (*node_it).first;
     //delete(*node_it).second;
@@ -108,9 +90,11 @@ public:
 
   void doWorkingCycle() {
     if (nodes_.size() > 0) {
-      this->gc_lock_.wlock();
+      //this->gc_lock_.rlock();
+      big_gc_lock.rlock();
       auto purge_start = this->nodes_.begin();
-      this->gc_lock_.unlock();
+      big_gc_lock.unlock();
+      //this->gc_lock_.unlock();
 
       //for node(from purge_start to null) {
       for (auto node_it = purge_start; node_it != this->nodes_.end(); node_it++) {
@@ -122,10 +106,12 @@ public:
         }
       }
 
-      this->gc_lock_.wlock();
+      //this->gc_lock_.rlock();
+      big_gc_lock.rlock();
       //auto new_purge_start = pudge_list.start;
       auto new_purge_start = nodes_.begin();
-      this->gc_lock_.unlock();
+      //this->gc_lock_.unlock();
+      big_gc_lock.unlock();
 
       for (auto node_it = new_purge_start; node_it != purge_start; node_it++) {
         //for node(from new_purge_start to purge_start) {//йнцдю пет йюсмр днярхц мскъ, мн нмх ме онлевемш мю сдюкемхе

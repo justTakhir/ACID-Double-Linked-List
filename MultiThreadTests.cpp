@@ -8,6 +8,83 @@
 
 #include <ConsistentList.hpp>
 
+TEST(InsertTest, InsertWithSize1_InSameTime) {
+  int k = 0;
+  while (k < 10) {
+    ConsistentList<int32_t> list = { 1 };
+    auto it2 = list.begin();
+    auto it1 = list.end();
+
+    list.run = false;
+
+    std::thread th1([&] {
+      list.insert(it1, 7);
+      });
+
+    std::thread th2([&] {
+      list.insert(it2, 8);
+      });
+
+    list.run = true;
+    list.debug_cv.notify_all();
+
+    th1.join();
+    th2.join();
+    k++;
+  }
+}
+
+TEST(WriteTest, HardDataOnlyWriting) {
+  int32_t k = 0;
+  while (k < 1) {
+    ConsistentList<int32_t> list;
+    for (int32_t i = 0; i < 100650; i++) {
+      list.push_back(i);
+    }
+
+    Iterator<int32_t> it = list.begin() + 124;
+
+    std::vector<std::thread> threads;
+    int32_t for_init = 0;
+
+    auto start_for_some_threads = std::chrono::high_resolution_clock::now();
+
+    for (size_t i = 0; i < 16; i++) {
+      threads.push_back(std::thread([&]() {
+        for (auto it1 = list.begin(); it1 != list.end(); it1++) {
+          *it1 = 2007;
+          //std::cout << "For Thread: " << std::this_thread::get_id() << " have " << for_init << std::endl;
+        }
+        }));
+    }
+    for (size_t i = 0; i < 16; i++) {
+      threads[i].join();
+    }
+
+    auto finish_for_some_threads = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> time_of_working_some_threads =
+      finish_for_some_threads - start_for_some_threads;
+
+    it = list.begin() + 124;
+
+    std::chrono::time_point start_for_single_thread = std::chrono::high_resolution_clock::now();
+
+    for (size_t i = 0; i < 16; i++) {
+      for (auto it1 = list.begin(); it1 != list.end(); it1++) {
+        for_init = *(it1);
+        //std::cout << "For single thread: " << i << " " << for_init << std::endl;
+      }
+    }
+    std::chrono::time_point finish_for_single_thread = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> time_of_working_single_thread =
+      finish_for_single_thread - start_for_single_thread;
+
+    ASSERT_TRUE(time_of_working_some_threads < time_of_working_single_thread);
+    //std::cout << k << std::endl;
+    k++;
+  }
+}
+
 TEST(InsertTests, AllInserts) {
   std::vector<std::thread> threads;
   ConsistentList<int32_t> list;
@@ -180,7 +257,8 @@ TEST(ReadTests, SimpleDataOnlyReading) {
   std::chrono::duration<float> time_of_working_single_thread =
     finish_for_single_thread - start_for_single_thread;
 
-  ASSERT_TRUE(time_of_working_some_threads > time_of_working_single_thread);
+  
+  //ASSERT_TRUE(time_of_working_some_threads > time_of_working_single_thread);
 }
 
 TEST(ReadTests, HardDataOnlyReading) {
@@ -228,7 +306,7 @@ TEST(ReadTests, HardDataOnlyReading) {
     std::chrono::duration<float> time_of_working_single_thread =
       finish_for_single_thread - start_for_single_thread;
 
-    ASSERT_TRUE(time_of_working_some_threads != time_of_working_single_thread);//заглушка, ибо это рандом(внезапно для автора)
+    ASSERT_TRUE(time_of_working_some_threads < time_of_working_single_thread);//заглушка, ибо это рандом(внезапно для автора)
     //std::cout << k << std::endl;
     k++;
   }
