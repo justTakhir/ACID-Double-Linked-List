@@ -2,6 +2,7 @@
 #include <shared_mutex>
 #include <atomic>
 #include "SpinlockBasedRWLock.hpp"
+#include "GarbageCollector.hpp"
 
 template<typename T>
 class Node {
@@ -20,6 +21,11 @@ private:
   //size_type ref_count_;
   volatile std::atomic<bool> deleted_;
   RWLock rwlock_;
+  volatile std::atomic<bool> died_;
+  //void push_to_GC(node_type* node) {
+  //  GC.nodes_.push_back()
+  //}
+
 public:
   node_reference operator =(node_const_reference other_node) {
 
@@ -61,11 +67,14 @@ public:
       if (!this->getPrev()->checkSentinel()) {
         this->getPrev()->subRefCount();
       }
-      if (!this->getNext()->checkSentinel()){
+      if (!this->getNext()->checkSentinel()) {
         this->getNext()->subRefCount();
       }
-      //pullToPurgatory(this)
-      //delete this;
+      if (!this->checkSentinel()) {
+        this->died_ = true;
+        //node_pointer deleted_node = this;
+        //GarbageCollector<T>::takeNode(this);
+      }
     }
   }
 
@@ -101,9 +110,13 @@ public:
     this->deleted_ = true;
   }
 
+  bool isDied() {
+    return this->died_;
+  }
   virtual bool checkSentinel() const = 0;
 
 protected:
-  Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr, bool deleted = false)
-    : ref_count_(ref_count), prev_(prev), next_(next), deleted_(deleted) {}
+  Node(size_type ref_count = 2, node_pointer prev = nullptr, node_pointer next = nullptr,
+                                                    bool deleted = false, bool died = false)
+    : ref_count_(ref_count), prev_(prev), next_(next), deleted_(deleted), died_(died) {}
 };

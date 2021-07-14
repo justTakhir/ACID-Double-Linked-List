@@ -2,6 +2,7 @@
 
 #include "Node.hpp"
 #include "ConstIterator.hpp"
+#include "GarbageCollector.hpp"
 
 template <class T>
 class Iterator {
@@ -33,29 +34,34 @@ public:
   }
 
   Iterator& operator++() {//pre
-    
+    //auto lokcdk = GarbageCollector::getRWLock();
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    //RWLock* lock = GarbageCollector<T>::getLock();
+    big_gc_lock.wlock();
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return *this;
   }
 
   Iterator operator++(int) {//postfix
     
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return tmp;
   }
 
@@ -76,7 +82,8 @@ public:
   Iterator operator+(S step) {
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto new_value = *this;
     for (S i = 0; i < step; i++) {
@@ -85,42 +92,47 @@ public:
       new_value.ptr->addRefCount();
     }
 
-    this->ptr->getRWLock()->unlock();
-
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return new_value;
   }
 
   Iterator& operator--() {//pre
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return *this;
   }
 
   Iterator operator--(int) {//post
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return tmp;
   }
 
   Iterator operator-(size_t step) {
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -129,14 +141,16 @@ public:
       new_value.ptr->addRefCount();
     }
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return new_value;
   }
 
   Iterator operator-(int step) {
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -145,7 +159,9 @@ public:
       new_value.ptr->addRefCount();
     }
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
+    
     return new_value;
   }
 
@@ -208,5 +224,6 @@ private:
   }
 
   Node<T>* ptr;
+  //RWLock* gc_lock;// = &GarbageCollector::getLock();
   //std::shared_mutex *it_mutex;
 };

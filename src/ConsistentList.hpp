@@ -13,6 +13,7 @@
 
 template<class T>
 class ConsistentList {
+  //friend class GarbageCollector<T>;
 public:
   using value_type = T;
   using pointer = T*;
@@ -59,6 +60,8 @@ public:
 
   ~ConsistentList() {
     this->clear();
+    //this->GC.stop();
+    //this->GC.getThread()->detach();
   }
 
   ConsistentList& operator=(const ConsistentList& x) {
@@ -505,6 +508,7 @@ public:
 private:
   SentinelNode<T> sentinel;
   size_type list_size = size_type();
+  GarbageCollector<T> GC;
   //mutable std::shared_mutex list_mutex;
 
   static void swap_nodes(node_type* node1, node_type* node2) { // todo
@@ -691,6 +695,10 @@ private:
       next_lock->unlock();
     }
   
+
+    if (deleted_node->isDied()) {
+      GC.putNodeToGC(deleted_node);
+    }
   }
 
   // PSEUDO CODE

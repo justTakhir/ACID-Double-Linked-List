@@ -1,9 +1,14 @@
 #pragma once
 
 #include "Node.hpp"
+//#include "GarbageCollector.hpp"
+
+template <class T>
+class GarbageCollector;
 
 template<typename T>
 class TrueNode : public Node<T> {
+  friend class GarbageCollector<T>;
 private:
   T value_;
 

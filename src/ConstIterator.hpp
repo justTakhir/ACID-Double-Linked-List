@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Node.hpp"
+#include "GarbageCollector.hpp"
 
 template<class T>
 class ConsistentList;
@@ -40,34 +41,39 @@ public:
   ConstIterator& operator++() {//pre
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return *this;
   }
 
   ConstIterator operator++(int) {//post
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     ConstIterator tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getNext();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return tmp;
   }
 
   ConstIterator operator+(size_t step) {
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -76,57 +82,65 @@ public:
       new_value.ptr->addRefCount();
     }
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return new_value;
   }
 
   ConstIterator operator+(int step) {
 
    //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-   this->ptr->getRWLock()->wlock();
-
+   //this->ptr->getRWLock()->wlock();
+   big_gc_lock.wlock();
+   
    auto new_value = *this;
-    for (size_t i = 0; i < step; i++) {
-      new_value.ptr->subRefCount();
-      new_value.ptr = new_value.ptr->getNext();
-      new_value.ptr->addRefCount();
-    }
+   for (size_t i = 0; i < step; i++) {
+     new_value.ptr->subRefCount();
+     new_value.ptr = new_value.ptr->getNext();
+     new_value.ptr->addRefCount();
+   }
 
-    this->ptr->getRWLock()->unlock();
-    return new_value;
+   //this->ptr->getRWLock()->unlock();
+   big_gc_lock.unlock();
+   return new_value;
   }
 
   ConstIterator& operator--() {//pre
     
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return *this;
   }
 
   ConstIterator operator--(int) {//post
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     ConstIterator tmp = *this;
     this->ptr->subRefCount();
     this->ptr = this->ptr->getPrev();
     this->ptr->addRefCount();
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return tmp;
   }
 
   ConstIterator operator-(size_t step) {
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -135,14 +149,16 @@ public:
       new_value.ptr->addRefCount();
     }
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return new_value;
   }
 
   ConstIterator operator-(int step) {
 
     //std::unique_lock<std::shared_mutex> lock(this->ptr->getRWLock());
-    this->ptr->getRWLock()->wlock();
+    //this->ptr->getRWLock()->wlock();
+    big_gc_lock.wlock();
 
     auto new_value = *this;
     for (size_t i = 0; i < step; i++) {
@@ -151,7 +167,8 @@ public:
       new_value.ptr->addRefCount();
     }
 
-    this->ptr->getRWLock()->unlock();
+    //this->ptr->getRWLock()->unlock();
+    big_gc_lock.unlock();
     return new_value;
   }
 
